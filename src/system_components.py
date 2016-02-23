@@ -397,17 +397,3 @@ class ComponentCoordinator(object):
         for comps in (self.dcomps,self.icomps):
             for comp in comps:
                 comp.register_out_val(out_val)
-
-
-    
-gsim_comp = GlobalSimDComp(weight=1, dist=5.0)
-lsim_comp = LocalSimDComp(weight=1, dist=3.0)
-sync_comp = SynchronyDComp(weight=1, syn_or_asyn=1)
-coord = ComponentCoordinator(1.0, 100.0)
-coord.add_component(lsim_comp)
-coord.add_component(gsim_comp)
-coord.add_component(sync_comp)
-
-print( coord.generate_response( 47))
-print( coord.generate_response( 72))
-

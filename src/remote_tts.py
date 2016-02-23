@@ -77,8 +77,9 @@ def extract_feature_values(in_fname):
     raises:
         subprocess.CalledProcessError: script call did not return with code 0
     """
-    out_fname = 'tmp/%s_features.txt' % in_fname.split('.')[0]
-    subprocess.check_call(['../Praat.exe', '--run', 'extract_features.praat',
+    out_fname = '%s_features.txt' % in_fname.split('.')[0]
+    subprocess.check_call(['../vendor/Praat.exe', '--run',
+                           '../misc/extract_features.praat',
                            in_fname, out_fname])
 
     #extract comma-separated key value pairs from output file, then delete it
@@ -109,7 +110,7 @@ def extract_speech_rate(in_fname):
     #run autobi (preventing console popup)
     si = subprocess.STARTUPINFO()
     si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-    comp_proc = subprocess.run(['java','-cp', '../AuToBI.jar',
+    comp_proc = subprocess.run(['java','-cp', '../vendor/AuToBI.jar',
         'edu.cuny.qc.speech.AuToBI.core.syllabifier.VillingSyllabifier',
         '%s'%in_fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         universal_newlines=True, check=True, startupinfo=si)

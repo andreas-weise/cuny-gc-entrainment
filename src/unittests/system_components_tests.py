@@ -1,6 +1,9 @@
 import unittest
+
+import sys
+sys.path.insert(0, '../')
 import system_components as sc
-import aux
+import auxiliaries as aux
 
 class TestDirectComponent(unittest.TestCase):
     

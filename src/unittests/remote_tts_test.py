@@ -1,12 +1,15 @@
 import unittest
-import remote_tts as rem
 from os import remove
 import requests
+
+import sys
+sys.path.insert(0, '../')
+import remote_tts as rem
 
 class TestSynthesize(unittest.TestCase):
     
     def setUp(self):
-        self.in_fname = 'tmp/ssml_test.xml'
+        self.in_fname = '../../tmp/ssml_test.xml'
         self.ssml_str = (
             '<?xml version="1.0" encoding="UTF-8" ?>\n'
             '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"\n'
@@ -22,15 +25,14 @@ class TestSynthesize(unittest.TestCase):
         self.ssml_file.flush()
         self.ssml_file.close()
 
-        self.in_fname2 = 'tmp/text_test.txt'
+        self.in_fname2 = '../../tmp/text_test.txt'
         self.text_str = 'This is a test.'
         self.text_file = open(self.in_fname2, 'w')
         self.text_file.write(self.text_str)
         self.text_file.flush()
         self.text_file.close()
 
-        self.out_fname = 'tmp/test.wav'
-        
+        self.out_fname = '../../tmp/test.wav'
 
     def test_synthesize_ssml_file_local_mary(self):
         rem.synthesize_file(self.in_fname, self.out_fname, '127.0.0.1', 59125,

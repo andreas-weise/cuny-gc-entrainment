@@ -1,4 +1,7 @@
 import unittest
+
+import sys
+sys.path.insert(0, '../')
 import auxiliaries as aux
 
 class TestAuxiliaries(unittest.TestCase):
