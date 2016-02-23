@@ -2,6 +2,10 @@ import requests
 import subprocess
 from os import remove
 
+import sys
+sys.path.insert(0, '../vendor/')
+import hyphenate
+
 TTS_TYPE_MARY = 1
 
 def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
@@ -94,14 +98,14 @@ def extract_feature_values(in_fname):
     return feat_val_dict
 
 
-def extract_speech_rate(in_fname):
-    """runs autobi to extract a given wav file's speech rate
+def extract_syllables_wav(in_fname):
+    """runs autobi to extract a given wav file's syllable count and length
 
     args:
         in_fname: name of the wav file which should be analyzed
 
     returns:
-        number of syllables and their total length in seconds
+        estimated number of syllables and their total length in seconds
 
     raises:
         subprocess.CalledProcessError: autobi call did not return with code 0
@@ -129,3 +133,19 @@ def extract_speech_rate(in_fname):
         syll_len += float(end) - float(start)
 
     return syll_count, syll_len
+
+
+def extract_syllables_text(in_str):
+    """runs a hyphenation algorithm to extract syllable count from a given text
+
+    args:
+        in_str: text which should be analyzed
+
+    returns:
+        estimated number of syllables
+    """
+    syll_count = 0
+    for word in in_str.split():
+        syll_count += len(hyphenate.hyphenate_word(word))
+
+    return syll_count
