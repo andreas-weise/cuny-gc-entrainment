@@ -6,8 +6,7 @@ import requests
 class TestSynthesize(unittest.TestCase):
     
     def setUp(self):
-        self.in_fname = 'tmp/send_ssml_test.xml'
-        self.out_fname = 'tmp/send_ssml_test.wav'
+        self.in_fname = 'tmp/ssml_test.xml'
         self.ssml_str = (
             '<?xml version="1.0" encoding="UTF-8" ?>\n'
             '<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis"\n'
@@ -23,26 +22,50 @@ class TestSynthesize(unittest.TestCase):
         self.ssml_file.flush()
         self.ssml_file.close()
 
-    def test_send_markup_file_to_local_mary(self):
-        rem.send_markup_file(self.in_fname, self.out_fname, '127.0.0.1', 59125,
-                             rem.TTS_TYPE_MARY, 'en_US')
+        self.in_fname2 = 'tmp/text_test.txt'
+        self.text_str = 'This is a test.'
+        self.text_file = open(self.in_fname2, 'w')
+        self.text_file.write(self.text_str)
+        self.text_file.flush()
+        self.text_file.close()
+
+        self.out_fname = 'tmp/test.wav'
+        
+
+    def test_synthesize_ssml_file_local_mary(self):
+        rem.synthesize_file(self.in_fname, self.out_fname, '127.0.0.1', 59125,
+                            rem.TTS_TYPE_MARY, 'en_US', 'SSML')
         #if no exception was raised then the function finished successfully
         self.assertTrue(True)
 
-    def test_send_markup_str_to_local_mary(self):
-        rem.send_markup_str(self.ssml_str, self.out_fname, '127.0.0.1', 59125,
-                            rem.TTS_TYPE_MARY, 'en_US')
+    def test_synthesize_ssml_str_local_mary(self):
+        rem.synthesize_str(self.ssml_str, self.out_fname, '127.0.0.1', 59125,
+                           rem.TTS_TYPE_MARY, 'en_US', 'SSML')
         #if no exception was raised then the function finished successfully
         self.assertTrue(True)
 
-    def test_send_faulty_markup_str_to_local_mary(self):
+    def test_synthesize_faulty_ssml_str_local_mary(self):
         ssml_str = self.ssml_str[:-1]
         self.assertRaises(requests.exceptions.RequestException,
-                          rem.send_markup_str, ssml_str, self.out_fname,
-                          '127.0.0.1', 59125, rem.TTS_TYPE_MARY, 'en_US')
+                          rem.synthesize_str, ssml_str, self.out_fname,
+                          '127.0.0.1', 59125, rem.TTS_TYPE_MARY, 'en_US',
+                          'SSML')
+
+    def test_synthesize_text_file_local_mary(self):
+        rem.synthesize_file(self.in_fname2, self.out_fname, '127.0.0.1', 59125,
+                            rem.TTS_TYPE_MARY, 'en_US', 'TEXT')
+        #if no exception was raised then the function finished successfully
+        self.assertTrue(True)
+
+    def test_synthesize_text_str_local_mary(self):
+        rem.synthesize_str(self.text_str, self.out_fname, '127.0.0.1', 59125,
+                           rem.TTS_TYPE_MARY, 'en_US', 'TEXT')
+        #if no exception was raised then the function finished successfully
+        self.assertTrue(True)
 
     def tearDown(self):
         remove(self.in_fname)
+        remove(self.in_fname2)
         remove(self.out_fname)
 
 

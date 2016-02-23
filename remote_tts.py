@@ -4,9 +4,9 @@ from os import remove
 
 TTS_TYPE_MARY = 1
 
-def send_markup_str(in_str, out_fname, ip_addr, port, tts_type, lang,
-                    voice=None):
-    """sends given markup string to a tts server and writes response to a file
+def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
+                   input_type, voice=None):
+    """sends given string to a tts server and writes response to a file
 
     args:
         in_str: ssml input as a string
@@ -18,6 +18,7 @@ def send_markup_str(in_str, out_fname, ip_addr, port, tts_type, lang,
             representing supported tts implementations, e.g. MARY TTS
         lang: language system to use, format can depend on tts_type; e.g.
             'en_US' for american english in MARY TTS
+        input_type: 'SSML' or 'TEXT'
         voice: name of the voice to use; if none is given, default is used
 
     returns:
@@ -30,7 +31,7 @@ def send_markup_str(in_str, out_fname, ip_addr, port, tts_type, lang,
     if tts_type == TTS_TYPE_MARY:
         params = {
             'INPUT_TEXT':in_str,
-            'INPUT_TYPE':'SSML',
+            'INPUT_TYPE':input_type,
             'OUTPUT_TYPE':'AUDIO',
             'LOCALE':lang,
             'AUDIO':'WAVE_FILE'
@@ -46,12 +47,13 @@ def send_markup_str(in_str, out_fname, ip_addr, port, tts_type, lang,
     with open(out_fname, 'wb') as out_file:
         for chunk in resp.iter_content(8192):
             out_file.write(chunk)
-    #do this only after writing output so failure response is written as well
+    #do this only after writing output so failure response is written as well in
+    #case of errors
     resp.raise_for_status()
 
 
-def send_markup_file(in_fname, out_fname, ip_addr, port, tts_type, lang,
-                          voice=None):
+def synthesize_file(in_fname, out_fname, ip_addr, port, tts_type, lang,
+                    input_type, voice=None):
     """sends given markup file to a tts server and writes the response to a file
 
     simply reads the file and sends contents using synthesize_markup_str
@@ -59,7 +61,8 @@ def send_markup_file(in_fname, out_fname, ip_addr, port, tts_type, lang,
     """
     with open(in_fname, 'r') as in_file:
         in_str = ''.join(in_file.readlines())
-        send_markup_str(in_str, out_fname, ip_addr, port, tts_type, lang, voice)
+        synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
+                       input_type, voice)
 
 
 def extract_feature_values(in_fname):
