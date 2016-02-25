@@ -1,5 +1,6 @@
 import requests
 import subprocess
+import time
 from os import remove
 
 import sys
@@ -81,7 +82,7 @@ def extract_feature_values(in_fname):
     raises:
         subprocess.CalledProcessError: script call did not return with code 0
     """
-    out_fname = '%s_features.txt' % in_fname.split('.')[0]
+    out_fname = '../tmp/%s_features.txt' % time.strftime('%Y%m%d%H%M%S')
     subprocess.check_call(['../vendor/Praat.exe', '--run',
                            '../misc/extract_features.praat',
                            in_fname, out_fname])
@@ -149,3 +150,38 @@ def extract_syllables_text(in_str):
         syll_count += len(hyphenate.hyphenate_word(word))
 
     return syll_count
+
+
+def synthesize_and_manipulate(in_str, out_fname, speech_rate, intensity, pitch):
+    tmp_fname = '../tmp/%s_synthesis.wav' % time.strftime('%Y%m%d%H%M%S')
+    synthesize_str(in_str, tmp_fname, '127.0.0.1', 59125, TTS_TYPE_MARY,
+                   'en_US', 'TEXT')
+
+    syll_count = extract_syllables_text(in_str)
+    subprocess.run(['../vendor/Praat.exe', '--run', '../misc/adapt.praat',
+                    tmp_fname, out_fname, str(syll_count), str(speech_rate),
+                    str(intensity), str(pitch)], check=True)
+    remove(tmp_fname)
+
+if __name__ == '__main__':
+    out_fname = '../tmp/result.wav'
+    in_str = 'yesterday i went to the supermarket and bought some bananas'
+    synthesize_and_manipulate(in_str, out_fname, 3.0, 60.0, 150.0)
+    feat_val_dict = extract_feature_values(out_fname)
+    print('intensity: %s' % feat_val_dict['intensity_mean'])
+    print('pitch: %s' % feat_val_dict['pitch_mean'])
+    print('speech duration: %s' % feat_val_dict['speech_duration'])
+    print('total duration: %s' % feat_val_dict['total_duration'])
+
+    syll_count = extract_syllables_text(in_str)
+    speech_duration = float(feat_val_dict['speech_duration'])
+    print('syllable count 1: %d' % syll_count)
+    print('speech duration 1: %s' % speech_duration)
+    print('speech rate 1: %f' % (syll_count/speech_duration))
+
+    syll_count2, speech_duration2 = extract_syllables_wav(out_fname)
+    print('syllable count 2: %d' % syll_count2)
+    print('speech duration 2: %s' % speech_duration2)
+    print('speech rate 2: %f' % float(syll_count2/speech_duration2))
+
+
