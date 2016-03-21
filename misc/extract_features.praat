@@ -65,14 +65,25 @@ plus pitch
 plus text_grid
 Remove
 
-writeFileLine ("'outfilename$'", "intensity_mean,'intensity_mean'")
-appendFileLine ("'outfilename$'", "intensity_max,'intensity_max'")
-appendFileLine ("'outfilename$'", "intensity_min,'intensity_min'")
-appendFileLine ("'outfilename$'", "pitch_mean,'pitch_mean'")
-appendFileLine ("'outfilename$'", "pitch_max,'pitch_max'")
-appendFileLine ("'outfilename$'", "pitch_min,'pitch_min'")
-appendFileLine ("'outfilename$'", "jitter_local,'jitter_local'")
-appendFileLine ("'outfilename$'", "shimmer_local,'shimmer_local'")
-appendFileLine ("'outfilename$'", "total_duration,'total_duration'")
-appendFileLine ("'outfilename$'", "speech_duration,'speech_duration'")
-appendFileLine ("'outfilename$'", "silence_duration,'silence_duration'")
+text$ = "intensity_mean,'intensity_mean''newline$'" 
+text$ > 'outfilename$'
+text$ = "intensity_max,'intensity_max''newline$'" 
+text$ >> 'outfilename$'
+text$ = "intensity_min,'intensity_min''newline$'" 
+text$ >> 'outfilename$'
+text$ = "pitch_mean,'pitch_mean''newline$'"
+text$ >> 'outfilename$'
+text$ = "pitch_max,'pitch_max''newline$'"
+text$ >> 'outfilename$'
+text$ = "pitch_min,'pitch_min''newline$'"
+text$ >> 'outfilename$'
+text$ = "jitter_local,'jitter_local''newline$'"
+text$ >> 'outfilename$'
+text$ = "shimmer_local,'shimmer_local''newline$'"
+text$ >> 'outfilename$'
+text$ = "total_duration,'total_duration''newline$'"
+text$ >> 'outfilename$'
+text$ = "speech_duration,'speech_duration''newline$'"
+text$ >> 'outfilename$'
+text$ = "silence_duration,'silence_duration''newline$'"
+text$ >> 'outfilename$'

@@ -1,4 +1,4 @@
 tmp/**
-**/__pycache__/**
+**/*.pyc
 vendor/AuToBI.jar
 vendor/Praat.exe

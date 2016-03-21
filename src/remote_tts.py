@@ -83,8 +83,7 @@ def extract_feature_values(in_fname):
         subprocess.CalledProcessError: script call did not return with code 0
     """
     out_fname = '../tmp/%s_features.txt' % time.strftime('%Y%m%d%H%M%S')
-    subprocess.check_call(['../vendor/Praat.exe', '--run',
-                           '../misc/extract_features.praat',
+    subprocess.check_call(['praat', '../misc/extract_features.praat',
                            in_fname, out_fname])
 
     #extract comma-separated key value pairs from output file, then delete it
@@ -112,13 +111,11 @@ def extract_syllables_wav(in_fname):
         subprocess.CalledProcessError: autobi call did not return with code 0
         RuntimeError: input file has wrong sample rate (needs to be 16khz)
     """
-    #run autobi (preventing console popup)
-    si = subprocess.STARTUPINFO()
-    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    #run autobi
     comp_proc = subprocess.run(['java','-cp', '../vendor/AuToBI.jar',
         'edu.cuny.qc.speech.AuToBI.core.syllabifier.VillingSyllabifier',
         '%s'%in_fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        universal_newlines=True, check=True, startupinfo=si)
+        universal_newlines=True, check=True)
 
     #syllabifier prints to stderr if wrong sample rate is detected
     if comp_proc.stderr:
@@ -155,10 +152,10 @@ def extract_syllables_text(in_str):
 def synthesize_and_manipulate(in_str, out_fname, speech_rate, intensity, pitch):
     tmp_fname = '../tmp/%s_synthesis.wav' % time.strftime('%Y%m%d%H%M%S')
     synthesize_str(in_str, tmp_fname, '127.0.0.1', 59125, TTS_TYPE_MARY,
-                   'en_US', 'TEXT')
+                   'en_US', 'TEXT', 'cmu-bdl-hsmm')
 
     syll_count = extract_syllables_text(in_str)
-    subprocess.run(['../vendor/Praat.exe', '--run', '../misc/adapt.praat',
+    subprocess.run(['praat', '../misc/adapt.praat',
                     tmp_fname, out_fname, str(syll_count), str(speech_rate),
                     str(intensity), str(pitch)], check=True)
     remove(tmp_fname)
