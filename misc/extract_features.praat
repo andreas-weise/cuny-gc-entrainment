@@ -20,7 +20,7 @@ select sound
 
 pitch = To Pitch... 0 75 500 
 pitch_mean = Get mean... 0 0 Hertz
-pitch_mean = round (pitch_mean)
+;pitch_mean = round (pitch_mean)
 pitch_max = Get maximum... 0 0 Hertz Parabolic
 pitch_max = round (pitch_max)
 pitch_min = Get minimum... 0 0 Hertz Parabolic

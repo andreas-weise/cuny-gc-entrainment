@@ -25,10 +25,8 @@ for interval from 1 to interval_count
 	end_point = Get end point... 1 interval
 	if interval_label$ == "silent"
             interval_length = end_point - start_point
-            if interval_length > 0.05
-                silence_duration = silence_duration + interval_length
-            endif
-	    interval_label$ = "sounding"
+            silence_duration = silence_duration + interval_length
+            interval_label$ = "sounding"
     else
 	    interval_label$ = "silent"
 	endif

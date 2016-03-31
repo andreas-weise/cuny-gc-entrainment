@@ -9,6 +9,7 @@ import hyphenate
 
 TTS_TYPE_MARY = 1
 
+
 def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
                    input_type, voice=None):
     """sends given string to a tts server and writes response to a file
@@ -35,11 +36,11 @@ def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
     """
     if tts_type == TTS_TYPE_MARY:
         params = {
-            'INPUT_TEXT':in_str,
-            'INPUT_TYPE':input_type,
-            'OUTPUT_TYPE':'AUDIO',
-            'LOCALE':lang,
-            'AUDIO':'WAVE_FILE'
+            'INPUT_TEXT': in_str,
+            'INPUT_TYPE': input_type,
+            'OUTPUT_TYPE': 'AUDIO',
+            'LOCALE': lang,
+            'AUDIO': 'WAVE_FILE'
             }
         if voice:
             params['VOICE'] = voice
@@ -48,12 +49,12 @@ def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
         raise ValueError('tts_type %s not supported' % str(tts_type))
 
     resp = requests.post('http://%s:%d/%s' % (ip_addr, port, url_suffix),
-                         data = params, stream=True)
+                         data=params, stream=True)
     with open(out_fname, 'wb') as out_file:
         for chunk in resp.iter_content(8192):
             out_file.write(chunk)
-    #do this only after writing output so failure response is written as well in
-    #case of errors
+    # do this only after writing output so failure response is written as well
+    # in case of errors
     resp.raise_for_status()
 
 
@@ -61,7 +62,7 @@ def synthesize_file(in_fname, out_fname, ip_addr, port, tts_type, lang,
                     input_type, voice=None):
     """sends given markup file to a tts server and writes the response to a file
 
-    simply reads the file and sends contents using synthesize_markup_str
+    simply reads the file and sends contents using synthesize_str
     function above (see comments there for details)
     """
     with open(in_fname, 'r') as in_file:
@@ -86,12 +87,12 @@ def extract_feature_values(in_fname):
     subprocess.check_call(['praat', '../misc/extract_features.praat',
                            in_fname, out_fname])
 
-    #extract comma-separated key value pairs from output file, then delete it
+    # extract comma-separated key value pairs from output file, then delete it
     with open(out_fname, 'r') as out_file:
         lines = out_file.readlines()
         feat_val_dict = {}
         for line in lines:
-            key, val = line.replace('\n','').split(',')
+            key, val = line.replace('\n', '').split(',')
             feat_val_dict[key] = val
     remove(out_fname)
 
@@ -111,22 +112,23 @@ def extract_syllables_wav(in_fname):
         subprocess.CalledProcessError: autobi call did not return with code 0
         RuntimeError: input file has wrong sample rate (needs to be 16khz)
     """
-    #run autobi
-    comp_proc = subprocess.run(['java','-cp', '../vendor/AuToBI.jar',
-        'edu.cuny.qc.speech.AuToBI.core.syllabifier.VillingSyllabifier',
-        '%s'%in_fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    # run autobi
+    comp_proc = subprocess.run(
+        ['java', '-cp', '../vendor/AuToBI.jar',
+         'edu.cuny.qc.speech.AuToBI.core.syllabifier.VillingSyllabifier',
+         '%s' % in_fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         universal_newlines=True, check=True)
 
-    #syllabifier prints to stderr if wrong sample rate is detected
+    # syllabifier prints to stderr if wrong sample rate is detected
     if comp_proc.stderr:
         raise RuntimeError('wav file does not have 16kHz sample rate')
 
-    #parse stdout for number and length of syllables (ignore 1st/last line)
+    # parse stdout for number and length of syllables (ignore 1st/last line)
     syll_count = 0
     syll_len = 0.0
     for line in comp_proc.stdout.split('\n')[1:-1]:
         syll_count += 1
-        #lines look like this: 'null [0.47, 1.06] (null)'
+        # lines look like this: 'null [0.47, 1.06] (null)'
         start, end = line.split('[')[1].split(']')[0].split(', ')
         syll_len += float(end) - float(start)
 
@@ -160,25 +162,22 @@ def synthesize_and_manipulate(in_str, out_fname, speech_rate, intensity, pitch):
                     str(intensity), str(pitch)], check=True)
     remove(tmp_fname)
 
-if __name__ == '__main__':
-    out_fname = '../tmp/result.wav'
-    in_str = 'yesterday i went to the supermarket and bought some bananas'
-    synthesize_and_manipulate(in_str, out_fname, 3.0, 60.0, 150.0)
-    feat_val_dict = extract_feature_values(out_fname)
-    print('intensity: %s' % feat_val_dict['intensity_mean'])
-    print('pitch: %s' % feat_val_dict['pitch_mean'])
-    print('speech duration: %s' % feat_val_dict['speech_duration'])
-    print('total duration: %s' % feat_val_dict['total_duration'])
 
-    syll_count = extract_syllables_text(in_str)
-    speech_duration = float(feat_val_dict['speech_duration'])
-    print('syllable count 1: %d' % syll_count)
-    print('speech duration 1: %s' % speech_duration)
-    print('speech rate 1: %f' % (syll_count/speech_duration))
+def transcribe_wav(in_fname):
+    tmp_fname1 = '../tmp/%s_extended.wav' % time.strftime('%Y%m%d%H%M%S')
+    tmp_fname2 = '../tmp/%s.log' % time.strftime('%Y%m%d%H%M%S')
 
-    syll_count2, speech_duration2 = extract_syllables_wav(out_fname)
-    print('syllable count 2: %d' % syll_count2)
-    print('speech duration 2: %s' % speech_duration2)
-    print('speech rate 2: %f' % float(syll_count2/speech_duration2))
+    # prepend some silence so the first bit of speech is not treated as noise
+    subprocess.check_call(['praat', '../misc/prepend_silence.praat',
+                           in_fname, tmp_fname1])
 
+    # run pocketsphinx (printing to log so only transcript is written to stdout)
+    comp_proc = subprocess.run(
+        ['pocketsphinx_continuous',
+         '-infile', tmp_fname1, '-logfn', tmp_fname2],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 
+    remove(tmp_fname1)
+    remove(tmp_fname2)
+
+    return comp_proc.stdout.decode("utf-8").replace('\r\n', '')
