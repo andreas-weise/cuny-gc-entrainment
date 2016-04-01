@@ -152,6 +152,15 @@ def extract_syllables_text(in_str):
 
 
 def synthesize_and_manipulate(in_str, out_fname, speech_rate, intensity, pitch):
+    """generates wav file from text with target speech rate, intensity and pitch
+
+    args:
+        in_str: text which should be synthesized
+        out_fname: file name for the output wav file
+        speech_rate: target speech rate in syllables per second
+        intensity: target mean intensity in decibel
+        pitch: target mean pitch in hertz
+    """
     tmp_fname = '../tmp/%s_synthesis.wav' % time.strftime('%Y%m%d%H%M%S')
     synthesize_str(in_str, tmp_fname, '127.0.0.1', 59125, TTS_TYPE_MARY,
                    'en_US', 'TEXT', 'cmu-bdl-hsmm')
@@ -164,6 +173,11 @@ def synthesize_and_manipulate(in_str, out_fname, speech_rate, intensity, pitch):
 
 
 def transcribe_wav(in_fname):
+    """generates transcription of a given wav file
+
+    args:
+        in_fname: file name of the wav file that should be transcribed
+    """
     tmp_fname1 = '../tmp/%s_extended.wav' % time.strftime('%Y%m%d%H%M%S')
     tmp_fname2 = '../tmp/%s.log' % time.strftime('%Y%m%d%H%M%S')
 
