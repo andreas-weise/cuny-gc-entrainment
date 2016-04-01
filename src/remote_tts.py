@@ -2,6 +2,7 @@ import requests
 import subprocess
 import time
 from os import remove
+import numpy
 
 import sys
 sys.path.insert(0, '../vendor/')
@@ -177,6 +178,9 @@ def transcribe_wav(in_fname):
 
     args:
         in_fname: file name of the wav file that should be transcribed
+
+    returns:
+        transcription of the wav file
     """
     tmp_fname1 = '../tmp/%s_extended.wav' % time.strftime('%Y%m%d%H%M%S')
     tmp_fname2 = '../tmp/%s.log' % time.strftime('%Y%m%d%H%M%S')
@@ -195,3 +199,64 @@ def transcribe_wav(in_fname):
     remove(tmp_fname2)
 
     return comp_proc.stdout.decode("utf-8").replace('\r\n', '')
+
+
+def get_ssml(in_str, rate='default', pitch='default'):
+    """returns ssml markup for given string with target rate and pitch
+
+    args:
+        in_str: plain text string for synthesis
+        rate: rate attribute value for prosody element
+        pitch: pitch attribute value for prosody element
+    """
+    return ('<?xml version="1.0"?>'
+            '<speak version="1.0"'
+            ' xmlns="http://www.w3.org/2001/10/synthesis"'
+            ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"'
+            ' xsi:schemaLocation="http://www.w3.org/2001/10/synthesis'
+            ' http://www.w3.org/TR/speech-synthesis/synthesis.xsd"'
+            ' xml:lang="en-US">'
+            # '.' and '<p>...</p>' are needed for this to work with marytts
+            '.<p><prosody pitch="%s" rate="%s">%s</prosody></p>'
+            '</speak>'
+            % (pitch, rate, in_str))
+
+
+def load_syllable_count_corpus():
+    """loads a small corpus of sentences annotated with syllable counts
+
+    returns:
+        list of 2 element lists, index 0 = syllable count, index 1 = text
+    """
+    corpus = []
+    with open('../misc/syllable_count_corpus.txt', 'r') as corpus_file:
+        for line in corpus_file.readlines():
+            index = line.find(' ')
+            corpus.append([int(line[:index]), line[index+1:].replace('\n', '')])
+    return corpus
+
+
+def detect_speech_rate(rate='default', voice='cmu-bdl-hsmm'):
+    """determines speech rate for given rate modifier using syllable corpus
+
+    args:
+        rate: ssml rate modifier to be used for synthesis
+        voice: voice to be used for synthesis
+
+    returns:
+        mean speech rate and standard deviation, in syllables per second
+    """
+    syll_rates = []
+    corpus = load_syllable_count_corpus()
+    for line in corpus:
+        in_str = get_ssml(line[1], rate)
+        out_fname = '../tmp/%s_speech_rate.wav' % time.strftime('%Y%m%d%H%M%S')
+        try:
+            synthesize_str(in_str, out_fname, '127.0.0.1', 59125, TTS_TYPE_MARY,
+                           'en_US', 'SSML', voice)
+        except requests.exceptions.HTTPError:
+            continue
+        duration = float(extract_feature_values(out_fname)['total_duration'])
+        syll_rates.append(line[0]/duration)
+        remove(out_fname)
+    return sum(syll_rates) / len(syll_rates), numpy.std(syll_rates)
