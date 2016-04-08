@@ -3,12 +3,10 @@ import subprocess
 import time
 from os import remove
 import numpy
-
-import sys
-sys.path.insert(0, '../vendor/')
-import hyphenate
+import xml.dom.minidom
 
 TTS_TYPE_MARY = 1
+mary_voices = ['cmu-bdl-hsmm', 'cmu-rms-hsmm', 'cmu-slt-hsmm']
 
 
 def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
@@ -84,7 +82,7 @@ def extract_feature_values(in_fname):
     raises:
         subprocess.CalledProcessError: script call did not return with code 0
     """
-    out_fname = '../tmp/%s_features.txt' % time.strftime('%Y%m%d%H%M%S')
+    out_fname = '../tmp/%s_features.txt' % get_fname_suffix()
     subprocess.check_call(['praat', '../misc/extract_features.praat',
                            in_fname, out_fname])
 
@@ -136,18 +134,48 @@ def extract_syllables_wav(in_fname):
     return syll_count, syll_len
 
 
-def extract_syllables_text(in_str):
-    """runs a hyphenation algorithm to extract syllable count from a given text
+def extract_syllables_text(in_str, ip_addr, port):
+    """determines the number of syllables in a given string
+
+    sends the string to marytts for a phoneme computation and determines the
+    number of syllables based on the number of vowels in the response (works
+    only for 'en_US'
 
     args:
-        in_str: text which should be analyzed
+        in_str: text whose syllable count should be determined
+        ip_addr: ip address of the mary tts server
+        port: port of the mary tts server
 
     returns:
-        estimated number of syllables
+        non-negative integer, estimated number of syllables in the given string
     """
+    # send text to mary for phoneme computation
+    params = {
+        'INPUT_TEXT': in_str,
+        'INPUT_TYPE': 'TEXT',
+        'OUTPUT_TYPE': 'PHONEMES',
+        'LOCALE': 'en_US'
+    }
+    resp = requests.post('http://%s:%d/process' % (ip_addr, port),
+                         data=params, stream=True)
+    resp_xml = ''
+    for chunk in resp.iter_content(8192):
+        resp_xml += chunk.decode("utf-8")
+    resp.raise_for_status()
+
+    # parse response and count (english) vowels
+    vowels = ["A", "O", "u", "i", "{", "V", "E", "I", "U", "@", "r=", "aU",
+              "OI", "@U", "EI", "AI"]
     syll_count = 0
-    for word in in_str.split():
-        syll_count += len(hyphenate.hyphenate_word(word))
+    dom_tree = xml.dom.minidom.parseString(resp_xml)
+    collection = dom_tree.documentElement
+    tokens = collection.getElementsByTagName("t")
+    for token in tokens:
+        if token.hasAttribute('ph'):
+            ph = token.getAttribute('ph')
+            for phone in ph.split():
+                if phone in vowels:
+                    syll_count += 1
 
     return syll_count
 
@@ -162,11 +190,11 @@ def synthesize_and_manipulate(in_str, out_fname, speech_rate, intensity, pitch):
         intensity: target mean intensity in decibel
         pitch: target mean pitch in hertz
     """
-    tmp_fname = '../tmp/%s_synthesis.wav' % time.strftime('%Y%m%d%H%M%S')
+    tmp_fname = '../tmp/%s_synthesis.wav' % get_fname_suffix()
     synthesize_str(in_str, tmp_fname, '127.0.0.1', 59125, TTS_TYPE_MARY,
                    'en_US', 'TEXT', 'cmu-bdl-hsmm')
 
-    syll_count = extract_syllables_text(in_str)
+    syll_count = extract_syllables_text(in_str, '127.0.0.1', 59125)
     subprocess.run(['praat', '../misc/adapt.praat',
                     tmp_fname, out_fname, str(syll_count), str(speech_rate),
                     str(intensity), str(pitch)], check=True)
@@ -182,8 +210,8 @@ def transcribe_wav(in_fname):
     returns:
         transcription of the wav file
     """
-    tmp_fname1 = '../tmp/%s_extended.wav' % time.strftime('%Y%m%d%H%M%S')
-    tmp_fname2 = '../tmp/%s.log' % time.strftime('%Y%m%d%H%M%S')
+    tmp_fname1 = '../tmp/%s_extended.wav' % get_fname_suffix()
+    tmp_fname2 = '../tmp/%s.log' % get_fname_suffix()
 
     # prepend some silence so the first bit of speech is not treated as noise
     subprocess.check_call(['praat', '../misc/prepend_silence.praat',
@@ -250,7 +278,7 @@ def detect_speech_rate(rate='default', voice='cmu-bdl-hsmm'):
     corpus = load_syllable_count_corpus()
     for line in corpus:
         in_str = get_ssml(line[1], rate)
-        out_fname = '../tmp/%s_speech_rate.wav' % time.strftime('%Y%m%d%H%M%S')
+        out_fname = '../tmp/%s_speech_rate.wav' % get_fname_suffix()
         try:
             synthesize_str(in_str, out_fname, '127.0.0.1', 59125, TTS_TYPE_MARY,
                            'en_US', 'SSML', voice)
@@ -260,3 +288,8 @@ def detect_speech_rate(rate='default', voice='cmu-bdl-hsmm'):
         syll_rates.append(line[0]/duration)
         remove(out_fname)
     return sum(syll_rates) / len(syll_rates), numpy.std(syll_rates)
+
+
+def get_fname_suffix():
+    """returns a time suffix for file names to make them more or less unique"""
+    return time.strftime('%Y%m%d%H%M%S')
