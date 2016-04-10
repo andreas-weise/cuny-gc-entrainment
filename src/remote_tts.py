@@ -6,11 +6,17 @@ import numpy
 import xml.dom.minidom
 
 TTS_TYPE_MARY = 1
-mary_voices = ['cmu-bdl-hsmm', 'cmu-rms-hsmm', 'cmu-slt-hsmm']
+MARY_VOICES = ['cmu-bdl-hsmm', 'cmu-rms-hsmm', 'cmu-slt-hsmm']
+TTS_TYPE_FESTIVAL = 2
+FESTIVAL_VOICES = ['cmu_us_ahw_cg', 'cmu_us_aup_cg', 'cmu_us_awb_cg',
+                   'cmu_us_axb_cg', 'cmu_us_bdl_cg', 'cmu_us_clb_cg',
+                   'cmu_us_fem_cg', 'cmu_us_gka_cg', 'cmu_us_jmk_cg',
+                   'cmu_us_ksp_cg', 'cmu_us_rms_cg', 'cmu_us_rxr_cg',
+                   'cmu_us_slt_cg', 'kal_diphone', 'rab_diphone']
 
 
-def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
-                   input_type, voice=None):
+def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang, input_type,
+                   voice=None):
     """sends given string to a tts server and writes response to a file
 
     args:
@@ -32,6 +38,7 @@ def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
     raises:
         requests.exceptions.RequestException: the connection failed or the
             server did not return an ok status
+        ValueError: the given tts_type is not supported
     """
     if tts_type == TTS_TYPE_MARY:
         params = {
@@ -44,17 +51,47 @@ def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
         if voice:
             params['VOICE'] = voice
         url_suffix = 'process'
+
+        resp = requests.post('http://%s:%d/%s' % (ip_addr, port, url_suffix),
+                             data=params, stream=True)
+        with open(out_fname, 'wb') as out_file:
+            for chunk in resp.iter_content(8192):
+                out_file.write(chunk)
+        # do this only after writing output so failure response is written as
+        # well in case of errors
+        resp.raise_for_status()
+    elif tts_type == TTS_TYPE_FESTIVAL:
+        args = ['festival_client', '--server', ip_addr, '--port', str(port),
+                '--ttw', '--otype', 'wav', '--output', out_fname]
+        prolog_fname = None
+        if input_type == 'TEXT' and voice:
+            # for plain text input voice must be specified in prolog file
+            prolog_fname = '../tmp/%s_festival_prolog' % get_fname_suffix()
+            with open(prolog_fname, 'wb') as prolog_file:
+                prolog_file.write(('(%s)' % voice).encode('utf-8'))
+            args.append('--prolog')
+            args.append(prolog_fname)
+        elif input_type == 'SABLE':
+            # for sable input correct tts_mode must be specified
+            args.append('--tts_mode')
+            args.append('sable')
+            # for consistent interface in this function, voice is not assumed to
+            # already be specified in given sable string but set here instead;
+            # kal_diphone is the only voice that is installed by default
+            in_str = in_str.replace('<<<voice>>>',
+                                    voice if voice else 'kal_diphone')
+
+        in_fname = '../tmp/%s_festival_input' % get_fname_suffix()
+        with open(in_fname, 'wb') as tmp_file:
+            tmp_file.write(in_str.encode('utf-8'))
+        args.append(in_fname)
+
+        subprocess.check_call(args)
+        remove(in_fname)
+        if prolog_fname:
+            remove(prolog_fname)
     else:
         raise ValueError('tts_type %s not supported' % str(tts_type))
-
-    resp = requests.post('http://%s:%d/%s' % (ip_addr, port, url_suffix),
-                         data=params, stream=True)
-    with open(out_fname, 'wb') as out_file:
-        for chunk in resp.iter_content(8192):
-            out_file.write(chunk)
-    # do this only after writing output so failure response is written as well
-    # in case of errors
-    resp.raise_for_status()
 
 
 def synthesize_file(in_fname, out_fname, ip_addr, port, tts_type, lang,
@@ -62,7 +99,7 @@ def synthesize_file(in_fname, out_fname, ip_addr, port, tts_type, lang,
     """sends given markup file to a tts server and writes the response to a file
 
     simply reads the file and sends contents using synthesize_str
-    function above (see comments there for details)
+    function (see comments there for details)
     """
     with open(in_fname, 'r') as in_file:
         in_str = ''.join(in_file.readlines())
@@ -115,7 +152,7 @@ def extract_syllables_wav(in_fname):
     comp_proc = subprocess.run(
         ['java', '-cp', '../vendor/AuToBI.jar',
          'edu.cuny.qc.speech.AuToBI.core.syllabifier.VillingSyllabifier',
-         '%s' % in_fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+         in_fname], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         universal_newlines=True, check=True)
 
     # syllabifier prints to stderr if wrong sample rate is detected
@@ -160,16 +197,16 @@ def extract_syllables_text(in_str, ip_addr, port):
                          data=params, stream=True)
     resp_xml = ''
     for chunk in resp.iter_content(8192):
-        resp_xml += chunk.decode("utf-8")
+        resp_xml += chunk.decode('utf-8')
     resp.raise_for_status()
 
     # parse response and count (english) vowels
-    vowels = ["A", "O", "u", "i", "{", "V", "E", "I", "U", "@", "r=", "aU",
-              "OI", "@U", "EI", "AI"]
+    vowels = ['A', 'O', 'u', 'i', '{', 'V', 'E', 'I', 'U', '@', 'r=', 'aU',
+              'OI', '@U', 'EI', 'AI']
     syll_count = 0
     dom_tree = xml.dom.minidom.parseString(resp_xml)
     collection = dom_tree.documentElement
-    tokens = collection.getElementsByTagName("t")
+    tokens = collection.getElementsByTagName('t')
     for token in tokens:
         if token.hasAttribute('ph'):
             ph = token.getAttribute('ph')
@@ -229,13 +266,19 @@ def transcribe_wav(in_fname):
     return comp_proc.stdout.decode("utf-8").replace('\r\n', '')
 
 
-def get_ssml(in_str, rate='default', pitch='default'):
-    """returns ssml markup for given string with target rate and pitch
+def get_ssml(in_str, rate='default', pitch='default', volume='default'):
+    """returns ssml markup for given string with target prosody
 
+    values for rate, pitch and volume are not checked here, incorrect inputs
+    will cause an error; see ssml specification for legal values
     args:
         in_str: plain text string for synthesis
-        rate: rate attribute value for prosody element
-        pitch: pitch attribute value for prosody element
+        rate: target speech rate
+        pitch: target pitch
+        volume: target volume (currently not supported by marytts)
+
+    returns:
+        xml of the required ssml markup
     """
     return ('<?xml version="1.0"?>'
             '<speak version="1.0"'
@@ -245,9 +288,38 @@ def get_ssml(in_str, rate='default', pitch='default'):
             ' http://www.w3.org/TR/speech-synthesis/synthesis.xsd"'
             ' xml:lang="en-US">'
             # '.' and '<p>...</p>' are needed for this to work with marytts
-            '.<p><prosody pitch="%s" rate="%s">%s</prosody></p>'
+            '.<p><prosody pitch="%s" rate="%s" volume="%s">%s</prosody></p>'
             '</speak>'
-            % (pitch, rate, in_str))
+            % (pitch, rate, volume, in_str))
+
+
+def get_sable(in_str, rate='default', pitch='default', volume='default'):
+    """returns sable markup for given string with target prosody
+
+    args:
+        in_str: plain text string for synthesis
+        rate: target speech rate
+        pitch: target pitch
+        volume: target volume (not all festival voices support this)
+
+    returns:
+        xml of the required sable markup
+    """
+    return (
+            # no xml version declaration since it causes a warning in festival
+            '<SABLE>'
+            # voice is only set to placeholder, filled in synthesize_str
+            '    <SPEAKER NAME="<<<voice>>>">'
+            '        <RATE SPEED="%s">'
+            '            <PITCH BASE="%s">'
+            '                <VOLUME LEVEL="%s">'
+            '                    %s'
+            '                </VOLUME>'
+            '            </PITCH>'
+            '        </RATE>'
+            '    </SPEAKER>'
+            '</SABLE>'
+            % (rate, pitch, volume, in_str))
 
 
 def load_syllable_count_corpus():
@@ -291,5 +363,5 @@ def detect_speech_rate(rate='default', voice='cmu-bdl-hsmm'):
 
 
 def get_fname_suffix():
-    """returns a time suffix for file names to make them more or less unique"""
+    """returns a timestamp for file names to make them more or less unique"""
     return time.strftime('%Y%m%d%H%M%S')
