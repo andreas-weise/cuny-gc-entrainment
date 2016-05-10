@@ -1,0 +1,76 @@
+Pitch manipulation through SSML was tested with MaryTTS. Test sentences were 
+synthesized with two voices, six different target pitch values and at three 
+different speech rates. For each configuration, all sentences in the 
+"syllable_count_corpus.txt" file in the "misc" folder were synthesized. Actual
+pitch values were measured with Praat.
+
+These are the results:
+voice: cmu-bdl-hsmm
+rate modifier: -30%
+    target pitch    actual pitch    std dev
+    100             101.5           1.6
+    110             111.1           1.6
+    120             120.8           1.6
+    130             130.7           1.5
+    140             140.6           1.9
+    150             150.1           1.7
+    160             159.6           1.6
+
+rate modifier: +0%
+    target pitch    actual pitch    std dev
+    default         119.9           1.7
+    100             101.3           1.7
+    110             110.8           1.7
+    130             130.4           1.6
+    140             140.3           2.0
+    150             149.8           1.7
+    160             159.3           1.5
+
+rate modifier: +30%
+    target pitch    actual pitch    std dev
+    100             101.7           2.3
+    110             111.3           2.2
+    120             120.9           2.0
+    130             130.4           1.7
+    140             140.2           1.7
+    150             149.7           1.8
+    160             159.2           1.6
+
+
+voice: cmu-rms-hsmm:
+rate modifier: -30%
+    target pitch    actual pitch    std dev
+    100              99.2           1.5
+    110             108.6           1.6
+    120             117.9           1.7
+    130             127.7           1.6
+    140             137.6           1.6
+    150             147.5           1.6
+    160             157.5           1.6
+
+rate modifier: +0%
+    target pitch    actual pitch    std dev	
+    default          94.2           1.4
+    100              99.1           1.7
+    110             108.3           1.6
+    130             127.4           1.6
+    140             137.3           1.7
+    150             147.3           1.6
+    160             157.2           1.6
+
+rate modifier: +30%
+    target pitch    actual pitch    std dev	
+    100              98.9           1.7
+    110             108.2           1.6
+    120             117.5           1.7
+    130             127.3           1.6
+    140             137.3           1.6
+    150             147.2           1.6
+    160             157.2           1.6
+
+In summary, the pitch manipulation is accurate within about 3Hz on average (greatest 
+delta about 2.8Hz).
+
+Pitch manipulation tests with Praat and Festival TTS
+TODO
+

@@ -1,0 +1,65 @@
+In order to determine the speech rate of an utterance, it is necessary to count
+the number of syllables as accurately as possible. Two methods of doing this 
+were tested, one relying on AuToBI, the other on CMU Sphinx and MaryTTS.
+AuToBI offers a Syllabifier that can be called directly from the command line 
+to annotate a given audio file. The Sphinx/MaryTTS method is more complex. 
+It runs pocketsphinx ASR on a given audio file, feeds the result into MaryTTS 
+and uses that system's "PHONEMES" output mode to get a list of phonemes based 
+on the Speech Assessment Methods Phonetic Alphabet (SAMPA). The number of 
+vowel phonemes appearing in the list is treated as the number of syllables.
+Note that this can result in slight differences from other definitions of 
+syllables. For instance, "capitalism" is considered by this method to have four
+rather than three syllables because of "ism" being pronounced as two, whereas 
+"interest" is considered to have only two instead of three syllables because 
+the first "e" is silent. Also, the ASR obviously introduces word errors but 
+the underlying assumption is that the output will contain a similar number of 
+syllables even though they might be different ones.
+
+The runtime of AuToBI's syllabifier and MaryTTS's phoneme output mode are 
+comparable (this was not rigorously tested). Assuming a scenario in which ASR 
+is necessary anyway, this means that no method is preferable with regard to 
+runtime. 
+The accuracy of both methods was tested using the "syllable_count_corpus.txt" 
+file in the "misc" folder. The MaryTTS system was used to synthesize each line
+in the file with two different voices at three different speech rates each. 
+Both syllable detection methods were run on each synthesized line and the 
+results compared to the ground truth given in the corpus file.
+These are the results: 
+
+voice: cmu-bdl-hsmm
+rate modifier: -30% (mean syll/s 4.26 (std dev 0.28))
+method      mean abs delta  std dev     max abs delta
+ps/mary:    0.278351        0.512569    3
+autobi:     3.030928        2.378831    11
+
+rate modifier: +0% (mean syll/s 5.40 (std dev 0.37))
+method      mean abs delta  std dev     max abs delta
+ps/mary:    0.216495        0.411855    1
+autobi:     2.000000        1.855613    10
+
+rate modifier: +30% (mean syll/s 7.73 (std dev 0.53))
+method      mean abs delta  std dev     max abs delta
+ps/mary:    0.587629        0.769959    4
+autobi:     7.371134        4.026509    18
+
+
+voice: cmu-rms-hsmm
+rate modifier: -30% (mean syll/s 3.46 (std dev 0.26))
+method      mean abs delta  std dev     max abs delta
+ps/mary:    0.645833        0.877724    4
+autobi:     13.73958        6.017760    30
+
+rate modifier: +0% (mean syll/s 4.40 (std dev 0.32))
+method      mean abs delta  std dev     max abs delta
+ps/mary:    0.364583        0.614407    3
+autobi:     7.343750        3.936549    19
+
+rate modifier: +30% (mean syll/s 6.36 (std dev 0.45))
+method      mean abs delta  std dev     max abs delta
+ps/mary:    0.208333        0.431003    2
+autobi:     2.343750        2.272242    13
+
+The results of the Sphinx/MaryTTS method were better than those of the AuToBI
+method in every single test and they were also excellent in absolute terms. 
+This not only decides this comparison but it also renders any search for an 
+even better method effectively unnecessary.

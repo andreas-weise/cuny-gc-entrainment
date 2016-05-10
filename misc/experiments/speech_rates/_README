@@ -1,0 +1,16 @@
+The speech rates stored in the files in this folder were determined as follows:
+    - the lines in the "syllable_count_corpus.txt" file in the "misc" folder 
+      were used for synthesis with a ground truth of syllable count
+    - for each voice, rate modifiers from -30% to +30% were applied
+    - all lines in the corpus were synthesized for each voice and each modifier
+      (except for some lines that caused http errors in marytts)
+    - the speech rate was computed as the ratio between the sounding parts of 
+      the synthesis and the number of syllables; sounding parts were annotated
+      with praat using these settings: 
+          To TextGrid (silences)... 75 0 -35 0.05 0.05 silent sounding
+
+In an entry like this
+    "-30%": [3.391398837635793, 0.2334339703128496]
+"-30%" is the modifier, the first value in the array is the arithmetic mean,
+the second value the standard deviation for the speech rate. The file name 
+marks the tts and the voice that the results refer to.
