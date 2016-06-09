@@ -1,3 +1,6 @@
+import time
+
+
 def is_int(value, name):
     if isinstance(value, int):
         return True
@@ -33,3 +36,7 @@ def is_less_or_equal(left_val, right_val, left_name, right_name):
         raise ValueError('%s must be less than or equal to %s' %
                          (left_name, right_name))
 
+
+def get_fname_suffix():
+    """returns a timestamp for file names to make them more or less unique"""
+    return time.strftime('%Y%m%d%H%M%S')

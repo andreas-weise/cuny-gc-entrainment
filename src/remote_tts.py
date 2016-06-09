@@ -1,9 +1,10 @@
 import requests
 import subprocess
-import time
 from os import remove
 import numpy
 import xml.dom.minidom
+from auxiliaries import get_fname_suffix
+import threading
 
 TTS_TYPE_MARY = 1
 MARY_VOICES = ['cmu-bdl-hsmm', 'cmu-rms-hsmm', 'cmu-slt-hsmm']
@@ -171,7 +172,7 @@ def extract_syllables_wav(in_fname):
     return syll_count, syll_len
 
 
-def extract_syllables_text(in_str, ip_addr, port):
+def extract_syllables_text(in_str, ip_addr='127.0.0.1', port=59125):
     """determines the number of syllables in a given string
 
     sends the string to marytts for a phoneme computation and determines the
@@ -238,6 +239,41 @@ def synthesize_and_manipulate(in_str, out_fname, speech_rate, intensity, pitch):
     remove(tmp_fname)
 
 
+def synthesize_alike(in_str, in_fname, out_fname):
+    """synthesizes given string with feature values matching those of given wav
+
+    args:
+        in_str: text which should be synthesized
+        in_fname: file name of the wav whose features values should be matched
+        out_fname: file name for the output wav file
+    """
+    syllable_count = 0
+    feat_val_dict = {}
+
+    def thread_extract_syllables_text(input_str):
+        nonlocal syllable_count
+        syllable_count = extract_syllables_text(input_str)
+
+    def thread_extract_feature_values(input_fname):
+        nonlocal feat_val_dict
+        feat_val_dict = extract_feature_values(input_fname)
+
+    thread1 = threading.Thread(target=thread_extract_syllables_text,
+                               args=(in_str,))
+    thread1.start()
+    thread2 = threading.Thread(target=thread_extract_feature_values,
+                               args=(in_fname,))
+    thread2.start()
+
+    thread1.join()
+    thread2.join()
+
+    speech_rate = syllable_count / float(feat_val_dict['speech_duration'])
+    synthesize_and_manipulate(in_str, out_fname, speech_rate,
+                              feat_val_dict['intensity_mean'],
+                              feat_val_dict['pitch_mean'])
+
+
 def transcribe_wav(in_fname):
     """generates transcription of a given wav file
 
@@ -263,7 +299,7 @@ def transcribe_wav(in_fname):
     remove(tmp_fname1)
     remove(tmp_fname2)
 
-    return comp_proc.stdout.decode("utf-8").replace('\r\n', '')
+    return comp_proc.stdout.decode("utf-8").replace('\n', '').replace('\r', '')
 
 
 def get_ssml(in_str, rate='default', pitch='default', volume='default'):
@@ -305,8 +341,7 @@ def get_sable(in_str, rate='default', pitch='default', volume='default'):
     returns:
         xml of the required sable markup
     """
-    return (
-            # no xml version declaration since it causes a warning in festival
+    return (  # no xml version declaration since it causes a warning in festival
             '<SABLE>'
             # voice is only set to placeholder, filled in synthesize_str
             '    <SPEAKER NAME="<<<voice>>>">'
@@ -360,8 +395,3 @@ def detect_speech_rate(rate='default', voice='cmu-bdl-hsmm'):
         syll_rates.append(line[0]/duration)
         remove(out_fname)
     return sum(syll_rates) / len(syll_rates), numpy.std(syll_rates)
-
-
-def get_fname_suffix():
-    """returns a timestamp for file names to make them more or less unique"""
-    return time.strftime('%Y%m%d%H%M%S')
