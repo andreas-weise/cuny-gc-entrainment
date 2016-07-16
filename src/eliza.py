@@ -5,7 +5,7 @@ import wave
 import sys
 from os import remove
 import remote_tts
-from auxiliaries import get_fname_suffix
+from auxiliaries import get_unique_fname
 import time
 from threading import Thread
 import select
@@ -281,22 +281,20 @@ def main():
           'ignore them.\nhit enter now to start.')
     sys.stdin.read(1)
 
-    in_fname = '../tmp/%s_eliza_in.wav' % remote_tts.get_fname_suffix()
+    tmp_fname = get_unique_fname('../tmp/%s_eliza_in', '.wav')
     in_str = 'hello, i am a psychotherapist. please tell me about your ' \
              'problems.'
 
-    remote_tts.synthesize_str(
-        in_str, in_fname, '127.0.0.1', 59125, remote_tts.TTS_TYPE_MARY,
-        'en_US', 'TEXT', 'cmu-bdl-hsmm')
+    remote_tts.synthesize(in_str, out_fname=tmp_fname)
 
     print('me: %s' % in_str)
-    play_audio(in_fname)
-    remove(in_fname)
+    play_audio(tmp_fname)
+    remove(tmp_fname)
 
     # loop indefinitely, only stop if the user requests it
     while True:
-        in_fname = '../tmp/%s_eliza_in.wav' % get_fname_suffix()
-        out_fname = '../tmp/%s_eliza_out.wav' % get_fname_suffix()
+        in_fname = get_unique_fname('../tmp/%s_eliza_in', '.wav')
+        out_fname = get_unique_fname('../tmp/%s_eliza_out', '.wav')
 
         print('please hit enter and say your response or type "stop" to stop')
         written_input = input()
@@ -309,7 +307,7 @@ def main():
 
         out_str = generate_response(in_str).lower()
         print('me: %s' % out_str)
-        remote_tts.synthesize_alike(out_str, in_fname, out_fname)
+        remote_tts.synthesize_alike(out_str, in_fname, out_fname=out_fname)
         play_audio(out_fname)
         remove(in_fname)
         remove(out_fname)

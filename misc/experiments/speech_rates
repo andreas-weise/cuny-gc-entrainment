@@ -1,0 +1,23 @@
+The speech rates in "misc/speech_rates.json" were determined as follows:
+    - the lines in the "syllable_count_corpus.txt" file in the "misc" folder 
+      were used for synthesis with a ground truth of syllable counts
+    - for each voice, rate modifiers were tested in steps of 1% from 0% up to 
+      whatever value was necessary to achieve a speech rate of at least 8.0 
+      and down to whatever value was necessary to achieve a speech rate of at
+      most 3.0
+    - all lines in the corpus were synthesized for each voice and each modifier
+      (except for some lines that caused http errors in marytts)
+    - the speech rate was computed as the ratio between the sounding parts of 
+      the synthesis and the number of syllables; sounding parts were annotated
+      with praat using these settings: 
+          To TextGrid (silences)... 75 0 -35 0.05 0.05 silent sounding
+
+In an entry like this
+    "-30%": [3.391398837635793, 0.2334339703128496]
+"-30%" is the modifier, the first value in the list is the arithmetic mean,
+the second value the standard deviation for the speech rate in syllables per 
+second.
+
+Since the inverse function is normally required (given a target speech rate, 
+which modifier should be used?), the file "misc/speech_rates_inverse.json"
+contains this information.

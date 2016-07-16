@@ -1,4 +1,5 @@
 import time
+from os import getpid
 
 
 def is_int(value, name):
@@ -37,6 +38,11 @@ def is_less_or_equal(left_val, right_val, left_name, right_name):
                          (left_name, right_name))
 
 
-def get_fname_suffix():
-    """returns a timestamp for file names to make them more or less unique"""
-    return time.strftime('%Y%m%d%H%M%S')
+def get_unique_fname(name, ftype=None):
+    """makes a file name more unique by adding a process id and timestamp to it
+
+    args:
+        name: file name including path, excluding file type
+        ftype: file type including '.'
+    """
+    return '%s_%s_%d%s' % (name, time.strftime('%Y%m%d%H%M%S'), getpid(), ftype)

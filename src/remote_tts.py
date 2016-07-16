@@ -3,86 +3,117 @@ import subprocess
 from os import remove
 import numpy
 import xml.dom.minidom
-from auxiliaries import get_fname_suffix
+from auxiliaries import get_unique_fname
 import threading
+import json
 
 TTS_TYPE_MARY = 1
-MARY_VOICES = ['cmu-bdl-hsmm', 'cmu-rms-hsmm', 'cmu-slt-hsmm']
 TTS_TYPE_FESTIVAL = 2
+MARY_VOICES = ['cmu-bdl-hsmm', 'cmu-rms-hsmm', 'cmu-slt-hsmm']
 FESTIVAL_VOICES = ['cmu_us_ahw_cg', 'cmu_us_aup_cg', 'cmu_us_awb_cg',
                    'cmu_us_axb_cg', 'cmu_us_bdl_cg', 'cmu_us_clb_cg',
                    'cmu_us_fem_cg', 'cmu_us_gka_cg', 'cmu_us_jmk_cg',
                    'cmu_us_ksp_cg', 'cmu_us_rms_cg', 'cmu_us_rxr_cg',
-                   'cmu_us_slt_cg', 'kal_diphone', 'rab_diphone']
+                   'cmu_us_slt_cg', 'rab_diphone',   'kal_diphone']
+DEFAULT_VOICE_MARY = 'cmu-bdl-hsmm'
+DEFAULT_VOICE_FESTIVAL = 'kal_diphone'
+INPUT_TYPE_TEXT = 'TEXT'  # value matters, used directly as parameter for mary
+INPUT_TYPE_SSML = 'SSML'  # value matters, used directly as parameter for mary
+INPUT_TYPE_SABLE = 'SABLE'
 
 
-def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang, input_type,
-                   voice=None):
+def synthesize(in_str, in_str_is_fname=False, input_type=None, out_fname=None,
+               tts_type=None, ip_addr=None, port=None, voice=None):
     """sends given string to a tts server and writes response to a file
 
     args:
-        in_str: ssml input as a string
+        in_str: plain text or markup string for synthesis or name of a file that
+            contains such a string
+        in_str_is_fname: whether in_str should be treated as a file name (True)
+            or directly as a string to synthesize (False, default)
+        input_type: whether the input is plain text (default) or some markup;
+            specified by one of the INPUT_TYPE_* constants at the beginning of
+            this module
         out_fname: server response is written to this file location; if the
-            return status is not ok, this contains additional info
-        ip_addr: ip address of the tts server
-        port: port of the tts server on which to connect
-        tts_type: one of the constants (at the beginning of this module)
-            representing supported tts implementations, e.g. MARY TTS
-        lang: language system to use, format can depend on tts_type; e.g.
-            'en_US' for american english in MARY TTS
-        input_type: 'SSML' or 'TEXT'
-        voice: name of the voice to use; if none is given, default is used
+            return status is not ok, this contains additional info; if no name
+            is given, a default will be used and returned by this function
+        ip_addr: ip address of the tts server, localhost is used if none given
+        port: port of the tts server, default for tts is used if none given
+        tts_type: tts software to use; specified by one of the TTS_TYPE_*
+            constants at the beginning of this module (only those tts are
+            supported); marytts is used if none given
+        voice: name of the voice to use; default for tts is used if none given
 
     returns:
-        nothing; the output is written to a file
+        name of the output file, same as out_fname if that was given
 
     raises:
         requests.exceptions.RequestException: the connection failed or the
             server did not return an ok status
-        ValueError: the given tts_type is not supported
+        ValueError: the given tts_type or input_type is not supported
     """
+    # if in_str is a file name, read string to synthesize from that file
+    if in_str_is_fname:
+        with open(in_str, 'r') as in_file:
+            in_str = ''.join(in_file.readlines())
+
+    # set defaults for missing parameters
+    input_type = input_type if input_type else INPUT_TYPE_TEXT
+    tts_type = tts_type if tts_type else TTS_TYPE_MARY
+    ip_addr = ip_addr if ip_addr else '127.0.0.1'
+    out_fname = out_fname if out_fname \
+        else get_unique_fname('../tmp/synthesis', '.wav')
     if tts_type == TTS_TYPE_MARY:
+        port = port if port else 59125
+        voice = voice if voice else DEFAULT_VOICE_MARY
+    elif tts_type == TTS_TYPE_FESTIVAL:
+        port = port if port else 1314
+        voice = voice if voice else DEFAULT_VOICE_FESTIVAL
+
+    # communicate with tts server in individually appropriate way
+    if tts_type == TTS_TYPE_MARY:
+        if input_type != INPUT_TYPE_TEXT and input_type != INPUT_TYPE_SSML:
+            raise ValueError('given input_type not supported for marytts')
+
         params = {
             'INPUT_TEXT': in_str,
             'INPUT_TYPE': input_type,
             'OUTPUT_TYPE': 'AUDIO',
-            'LOCALE': lang,
-            'AUDIO': 'WAVE_FILE'
-            }
-        if voice:
-            params['VOICE'] = voice
-        url_suffix = 'process'
-
-        resp = requests.post('http://%s:%d/%s' % (ip_addr, port, url_suffix),
+            'LOCALE': 'en_US',
+            'AUDIO': 'WAVE_FILE',
+            'VOICE': voice
+        }
+        resp = requests.post('http://%s:%d/process' % (ip_addr, port),
                              data=params, stream=True)
         with open(out_fname, 'wb') as out_file:
             for chunk in resp.iter_content(8192):
                 out_file.write(chunk)
-        # do this only after writing output so failure response is written as
-        # well in case of errors
+        # raise exception if http request came back with an error; do this only
+        # after writing output so failure response is logged
+        # TODO: write to different file (txt, not wav) and include note in msg?
         resp.raise_for_status()
     elif tts_type == TTS_TYPE_FESTIVAL:
         args = ['festival_client', '--server', ip_addr, '--port', str(port),
                 '--ttw', '--otype', 'wav', '--output', out_fname]
         prolog_fname = None
-        if input_type == 'TEXT' and voice:
-            # for plain text input voice must be specified in prolog file
-            prolog_fname = '../tmp/%s_festival_prolog' % get_fname_suffix()
+        if input_type == INPUT_TYPE_TEXT:
+            # for plain text input, voice must be specified in prolog file
+            prolog_fname = get_unique_fname('../tmp/festival_prolog', '.wav')
             with open(prolog_fname, 'wb') as prolog_file:
                 prolog_file.write(('(%s)' % voice).encode('utf-8'))
             args.append('--prolog')
             args.append(prolog_fname)
-        elif input_type == 'SABLE':
-            # for sable input correct tts_mode must be specified
+        elif input_type == INPUT_TYPE_SABLE:
+            # for sable input, tts_mode option must be set
             args.append('--tts_mode')
             args.append('sable')
             # for consistent interface in this function, voice is not assumed to
-            # already be specified in given sable string but set here instead;
-            # kal_diphone is the only voice that is installed by default
-            in_str = in_str.replace('<<<voice>>>',
-                                    voice if voice else 'kal_diphone')
+            # already be specified in given sable string but set here instead
+            in_str = in_str.replace('<<<voice>>>', voice)
+        else:
+            raise ValueError('given input_type not supported for festivaltts')
 
-        in_fname = '../tmp/%s_festival_input' % get_fname_suffix()
+        in_fname = get_unique_fname('../tmp/festival_input')
         with open(in_fname, 'wb') as tmp_file:
             tmp_file.write(in_str.encode('utf-8'))
         args.append(in_fname)
@@ -92,20 +123,9 @@ def synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang, input_type,
         if prolog_fname:
             remove(prolog_fname)
     else:
-        raise ValueError('tts_type %s not supported' % str(tts_type))
+        raise ValueError('given tts_type not supported')
 
-
-def synthesize_file(in_fname, out_fname, ip_addr, port, tts_type, lang,
-                    input_type, voice=None):
-    """sends given markup file to a tts server and writes the response to a file
-
-    simply reads the file and sends contents using synthesize_str
-    function (see comments there for details)
-    """
-    with open(in_fname, 'r') as in_file:
-        in_str = ''.join(in_file.readlines())
-        synthesize_str(in_str, out_fname, ip_addr, port, tts_type, lang,
-                       input_type, voice)
+    return out_fname
 
 
 def extract_feature_values(in_fname):
@@ -120,30 +140,30 @@ def extract_feature_values(in_fname):
     raises:
         subprocess.CalledProcessError: script call did not return with code 0
     """
-    out_fname = '../tmp/%s_features.txt' % get_fname_suffix()
+    tmp_fname = get_unique_fname('../tmp/features', '.txt')
     subprocess.check_call(['praat', '../misc/extract_features.praat',
-                           in_fname, out_fname])
+                           in_fname, tmp_fname])
 
     # extract comma-separated key value pairs from output file, then delete it
-    with open(out_fname, 'r') as out_file:
+    with open(tmp_fname, 'r') as out_file:
         lines = out_file.readlines()
         feat_val_dict = {}
         for line in lines:
             key, val = line.replace('\n', '').split(',')
             feat_val_dict[key] = val
-    remove(out_fname)
+    remove(tmp_fname)
 
     return feat_val_dict
 
 
-def extract_syllables_wav(in_fname):
-    """runs autobi to extract a given wav file's syllable count and length
+def count_syllables_wav(in_fname):
+    """counts number of syllables in a given wav file using autobi
 
     args:
         in_fname: name of the wav file which should be analyzed
 
     returns:
-        estimated number of syllables and their total length in seconds
+        estimated number of syllables
 
     raises:
         subprocess.CalledProcessError: autobi call did not return with code 0
@@ -160,24 +180,27 @@ def extract_syllables_wav(in_fname):
     if comp_proc.stderr:
         raise RuntimeError('wav file does not have 16kHz sample rate')
 
+    # each output line (except 1st and last) marks one syllable
+    syll_count = len(comp_proc.stdout.split('\n')) - 2
+
+    # code to extract syllable lengths as well (results not very reliable)
     # parse stdout for number and length of syllables (ignore 1st/last line)
-    syll_count = 0
-    syll_len = 0.0
-    for line in comp_proc.stdout.split('\n')[1:-1]:
-        syll_count += 1
-        # lines look like this: 'null [0.47, 1.06] (null)'
-        start, end = line.split('[')[1].split(']')[0].split(', ')
-        syll_len += float(end) - float(start)
+    # syll_len = 0.0
+    # for line in comp_proc.stdout.split('\n')[1:-1]:
+    #     syll_count += 1
+    #     # lines look like this: 'null [0.47, 1.06] (null)'
+    #     start, end = line.split('[')[1].split(']')[0].split(', ')
+    #     syll_len += float(end) - float(start)
 
-    return syll_count, syll_len
+    return syll_count
 
 
-def extract_syllables_text(in_str, ip_addr='127.0.0.1', port=59125):
-    """determines the number of syllables in a given string
+def count_syllables_text(in_str, ip_addr=None, port=None):
+    """counts number of syllables in a given string
 
     sends the string to marytts for a phoneme computation and determines the
     number of syllables based on the number of vowels in the response (works
-    only for 'en_US'
+    only for 'en_US')
 
     args:
         in_str: text whose syllable count should be determined
@@ -186,7 +209,14 @@ def extract_syllables_text(in_str, ip_addr='127.0.0.1', port=59125):
 
     returns:
         non-negative integer, estimated number of syllables in the given string
+
+    raises:
+        requests.exceptions.RequestException: the connection failed or the
+            server did not return an ok status
     """
+    ip_addr = ip_addr if ip_addr else '127.0.0.1'
+    port = port if port else 59125
+
     # send text to mary for phoneme computation
     params = {
         'INPUT_TEXT': in_str,
@@ -218,41 +248,120 @@ def extract_syllables_text(in_str, ip_addr='127.0.0.1', port=59125):
     return syll_count
 
 
-def synthesize_and_manipulate(in_str, out_fname, speech_rate, intensity, pitch):
-    """generates wav file from text with target speech rate, intensity and pitch
+def synthesize_with_features(in_str, speech_rate=None, intensity=None,
+                             pitch=None, in_str_is_fname=False, out_fname=None,
+                             tts_type=None, ip_addr=None, port=None, voice=None,
+                             speech_rates_dict=None):
+    """generates wav from plain text with given speech rate, intensity and pitch
 
     args:
-        in_str: text which should be synthesized
-        out_fname: file name for the output wav file
-        speech_rate: target speech rate in syllables per second
+        in_str: text which should be synthesized; either directly plain text or
+            the name of a file from which to read plain text
+        speech_rate: target mean speech rate in syllables per second (3.0-8.0)
+        intensity: target mean intensity in decibel
+        pitch: target mean pitch in hertz
+        speech_rates_dict: see load_speech_rates_dict(); offered as a parameter
+            so it can be loaded once and reused for efficiency; loaded in this
+            function if none given
+        (for details on other parameters see synthesize())
+
+    returns and raises:
+        see synthesize()
+    """
+    # if in_str is a file name, read string to synthesize from that file
+    if in_str_is_fname:
+        with open(in_str, 'r') as in_file:
+            in_str = ''.join(in_file.readlines())
+
+    speech_rates_dict = (speech_rates_dict if speech_rates_dict
+                         else load_speech_rates_dict())
+    pitch = pitch if pitch else 'default'
+
+    # adjust target speech rate to be within the supported range
+    if speech_rate < 3.0:
+        speech_rate = 3.0
+    elif speech_rate > 8.0:
+        speech_rate = 8.0
+
+    # generate appropriate markup from plain text; only speech rate and pitch
+    # are adjusted that way, intensity through praat (this combination is most
+    # efficient and accurate)
+    if not tts_type or tts_type == TTS_TYPE_MARY:
+        input_type = INPUT_TYPE_SSML
+        voice = voice if voice else DEFAULT_VOICE_MARY
+        if speech_rate:
+            rate_modifier = \
+                speech_rates_dict['mary'][voice][round(speech_rate, 1)]
+        else:
+            rate_modifier = 'default'
+        in_str = get_ssml(in_str, rate_modifier, pitch)
+    elif tts_type == TTS_TYPE_FESTIVAL:
+        input_type = INPUT_TYPE_SABLE
+        voice = voice if voice else DEFAULT_VOICE_MARY
+        if speech_rate:
+            rate_modifier = \
+                speech_rates_dict['festival'][voice][round(speech_rate, 1)]
+        else:
+            rate_modifier = 'default'
+        in_str = get_sable(in_str, rate_modifier, pitch)
+    else:
+        raise ValueError('given tts_type not supported')
+
+    tmp_fname = synthesize(in_str, False, input_type, None, tts_type,
+                           ip_addr, port, voice)
+    out_fname = out_fname if out_fname \
+        else get_unique_fname('../tmp/synthesis_final', '.wav')
+
+    adapt_wav(tmp_fname, out_fname, intensity=intensity)
+    remove(tmp_fname)
+    return out_fname
+
+
+def adapt_wav(in_fname, out_fname, syll_count=None, speech_rate=None,
+              intensity=None, pitch=None):
+    """runs praat script to adapt given wav's speech rate, intensity, pitch
+
+    script allows flexibility in terms of which features are adapted, if
+    parameter is none, that feature will not be actively adapted (a change in
+    another feature can still cause a change in an "unadapted" feature, though)
+
+    args:
+        in_fname: input wav file of spoken text
+        out_fname: output wav file with adapted features
+        syll_count: number of syllables in the input wav file's text
+        speech_rate: target mean speech rate in syllables per second
         intensity: target mean intensity in decibel
         pitch: target mean pitch in hertz
     """
-    tmp_fname = '../tmp/%s_synthesis.wav' % get_fname_suffix()
-    synthesize_str(in_str, tmp_fname, '127.0.0.1', 59125, TTS_TYPE_MARY,
-                   'en_US', 'TEXT', 'cmu-bdl-hsmm')
+    syll_count = syll_count if syll_count else 0
+    # in the script, "<= 0" means "do not adapt"
+    speech_rate = speech_rate if speech_rate else 0
+    intensity = intensity if intensity else 0
+    pitch = pitch if pitch else 0
 
-    syll_count = extract_syllables_text(in_str, '127.0.0.1', 59125)
     subprocess.run(['praat', '../misc/adapt.praat',
-                    tmp_fname, out_fname, str(syll_count), str(speech_rate),
+                    in_fname, out_fname, str(syll_count), str(speech_rate),
                     str(intensity), str(pitch)], check=True)
-    remove(tmp_fname)
 
 
-def synthesize_alike(in_str, in_fname, out_fname):
+def synthesize_alike(in_str, in_fname, in_str_is_fname=False,
+                     input_type=None, out_fname=None, tts_type=None,
+                     ip_addr=None, port=None, voice=None):
     """synthesizes given string with feature values matching those of given wav
 
     args:
-        in_str: text which should be synthesized
-        in_fname: file name of the wav whose features values should be matched
-        out_fname: file name for the output wav file
+        in_fname: file name of the wav whose feature values should be matched
+        (for details on other parameters see synthesize())
+
+    returns and raises:
+        see synthesize()
     """
     syllable_count = 0
     feat_val_dict = {}
 
     def thread_extract_syllables_text(input_str):
         nonlocal syllable_count
-        syllable_count = extract_syllables_text(input_str)
+        syllable_count = count_syllables_text(input_str)
 
     def thread_extract_feature_values(input_fname):
         nonlocal feat_val_dict
@@ -268,10 +377,11 @@ def synthesize_alike(in_str, in_fname, out_fname):
     thread1.join()
     thread2.join()
 
-    speech_rate = syllable_count / float(feat_val_dict['speech_duration'])
-    synthesize_and_manipulate(in_str, out_fname, speech_rate,
-                              feat_val_dict['intensity_mean'],
-                              feat_val_dict['pitch_mean'])
+    out_fname = synthesize_with_features(
+        in_str, syllable_count / float(feat_val_dict['speech_duration']),
+        feat_val_dict['intensity_mean'], feat_val_dict['pitch_mean'],
+        in_str_is_fname, input_type, out_fname, tts_type, ip_addr, port, voice)
+    return out_fname
 
 
 def transcribe_wav(in_fname):
@@ -283,10 +393,10 @@ def transcribe_wav(in_fname):
     returns:
         transcription of the wav file
     """
-    tmp_fname1 = '../tmp/%s_extended.wav' % get_fname_suffix()
-    tmp_fname2 = '../tmp/%s.log' % get_fname_suffix()
+    tmp_fname1 = get_unique_fname('../tmp/extended', '.wav')
+    tmp_fname2 = get_unique_fname('../tmp/transcribe', '.log')
 
-    # prepend some silence so the first bit of speech is not treated as noise
+    # prepend some silence (first bit of speech might else be treated as noise)
     subprocess.check_call(['praat', '../misc/prepend_silence.praat',
                            in_fname, tmp_fname1])
 
@@ -332,6 +442,8 @@ def get_ssml(in_str, rate='default', pitch='default', volume='default'):
 def get_sable(in_str, rate='default', pitch='default', volume='default'):
     """returns sable markup for given string with target prosody
 
+    values for rate, pitch and volume are not checked here, incorrect inputs
+    will cause an error; see sable specification for legal values
     args:
         in_str: plain text string for synthesis
         rate: target speech rate
@@ -343,7 +455,7 @@ def get_sable(in_str, rate='default', pitch='default', volume='default'):
     """
     return (  # no xml version declaration since it causes a warning in festival
             '<SABLE>'
-            # voice is only set to placeholder, filled in synthesize_str
+            # voice is only set to placeholder, filled in synthesize
             '    <SPEAKER NAME="<<<voice>>>">'
             '        <RATE SPEED="%s">'
             '            <PITCH BASE="%s">'
@@ -371,12 +483,26 @@ def load_syllable_count_corpus():
     return corpus
 
 
-def detect_speech_rate(rate='default', voice='cmu-bdl-hsmm'):
-    """determines speech rate for given rate modifier using syllable corpus
+def load_speech_rates_dict():
+    """loads a json file which matches target speech rates to modifiers
+
+    returns:
+        dictionary with best modifiers to match target speech rate given a tts,
+        voice and target rate; structure: [tts][voice][target_rate]
+    """
+    return json.load(open('../misc/speech_rates_inverse.json'))
+
+
+def detect_tts_speech_rate(tts_type, voice, rate_modifier,
+                           ip_addr=None, port=None):
+    """determines tts average speech rate for given rate modifier
 
     args:
-        rate: ssml rate modifier to be used for synthesis
+        tts_type: tts software to use; specified by one of the TTS_TYPE_*
+            constants at the beginning of this module (only those tts are
+            supported);
         voice: voice to be used for synthesis
+        rate_modifier: rate modifier (ssml/sable) to be used for synthesis
 
     returns:
         mean speech rate and standard deviation, in syllables per second
@@ -384,14 +510,19 @@ def detect_speech_rate(rate='default', voice='cmu-bdl-hsmm'):
     syll_rates = []
     corpus = load_syllable_count_corpus()
     for line in corpus:
-        in_str = get_ssml(line[1], rate)
-        out_fname = '../tmp/%s_speech_rate.wav' % get_fname_suffix()
+        if tts_type == TTS_TYPE_MARY:
+            in_str = get_ssml(line[1], rate_modifier)
+            input_type = INPUT_TYPE_SSML
+        else:
+            in_str = get_sable(line[1], rate_modifier)
+            input_type = INPUT_TYPE_SABLE
+        out_fname = get_unique_fname('../tmp/speech_rate', '.wav')
         try:
-            synthesize_str(in_str, out_fname, '127.0.0.1', 59125, TTS_TYPE_MARY,
-                           'en_US', 'SSML', voice)
+            synthesize(in_str, False, input_type, out_fname, tts_type,
+                       ip_addr, port, voice)
         except requests.exceptions.HTTPError:
             continue
-        duration = float(extract_feature_values(out_fname)['total_duration'])
+        duration = float(extract_feature_values(out_fname)['speech_duration'])
         syll_rates.append(line[0]/duration)
         remove(out_fname)
     return sum(syll_rates) / len(syll_rates), numpy.std(syll_rates)

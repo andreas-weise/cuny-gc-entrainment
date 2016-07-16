@@ -1,0 +1,83 @@
+The average runtimes for synthesizing text with marytts and festival tts were
+determined for different voices and different speech rates and pitch settings.
+For each voice and each setting, all lines in "misc/syllable_count_corpus.txt"
+were synthesized and the runtime was measured with time.time(). Loops ran line
+by line through the corpus, not voice by voice. This was done to avoid that a 
+period of higher load on the machine affects only the measurements of one voice.
+Nonetheless, the measurements were all done with the machine being otherwise 
+idle. They were run on a personal laptop (XPS 9550 with Intel Core i5-6300HQ 
+Quad Core CPU and 32GB RAM) on Ubuntu Linux 15.10. The laptop ran the TTS 
+as a server and connected to itself for each line synthesis.
+
+The following tables give the results for default settings, rate at +-30%, 
+pitch at +-30% and both pitch and rate at +30% or both at -30%, respectively,
+for each voice in seconds of runtime per syllable of text. Standard deviations
+are listed in parentheses:
+
+MARY:
+       cmu-bdl-hsmm       cmu-rms-hsmm       cmu-slt-hsmm       
+dflt   0.0062 (0.0005)    0.0077 (0.0006)    0.0248 (0.0019)
+r+30%  0.0044 (0.0003)    0.0055 (0.0005)    0.0169 (0.0014)
+r-30%  0.0078 (0.0007)    0.0097 (0.0008)    0.0320 (0.0025)
+p+30%  0.0060 (0.0007)    0.0071 (0.0006)    0.0223 (0.0017)
+p-30%  0.0059 (0.0005)    0.0071 (0.0005)    0.0222 (0.0018)
+pr+30% 0.0044 (0.0009)    0.0053 (0.0010)    0.0153 (0.0013)
+pr-30% 0.0073 (0.0006)    0.0089 (0.0007)    0.0287 (0.0023)
+
+FESTIVAL:
+       cmu_us_ahw_cg      cmu_us_aup_cg      cmu_us_awb_cg      cmu_us_axb_cg     
+dflt   0.1168 (0.0120)    0.1060 (0.0109)    0.1203 (0.0147)    0.1244 (0.0120)
+r+30%  0.0950 (0.0110)    0.0863 (0.0101)    0.0995 (0.0140)    0.1009 (0.0112)
+r-30%  0.1572 (0.0142)    0.1428 (0.0135)    0.1594 (0.0171)    0.1681 (0.0143)
+p+30%  0.1147 (0.0118)    0.1041 (0.0109)    0.1179 (0.0145)    0.1222 (0.0118)
+p-30%  0.1148 (0.0118)    0.1042 (0.0109)    0.1179 (0.0145)    0.1221 (0.0118)
+pr+30% 0.0948 (0.0111)    0.0860 (0.0100)    0.0989 (0.0139)    0.1005 (0.0109)
+pr-30% 0.1564 (0.0142)    0.1420 (0.0134)    0.1583 (0.0168)    0.1669 (0.0140)
+
+       cmu_us_bdl_cg      cmu_us_clb_cg      cmu_us_fem_cg      cmu_us_gka_cg
+dflt   0.1147 (0.0146)    0.1331 (0.0159)    0.1090 (0.0117)    0.1192 (0.0117)
+r+30%  0.0948 (0.0136)    0.1096 (0.0150)    0.0887 (0.0103)    0.0967 (0.0107)
+r-30%  0.1520 (0.0166)    0.1771 (0.0180)    0.1468 (0.0137)    0.1610 (0.0140)
+p+30%  0.1126 (0.0141)    0.1310 (0.0156)    0.1070 (0.0113)    0.1173 (0.0117)
+p-30%  0.1127 (0.0143)    0.1310 (0.0157)    0.1069 (0.0111)    0.1173 (0.0117)
+pr+30% 0.0943 (0.0134)    0.1090 (0.0147)    0.0884 (0.0104)    0.0964 (0.0106)
+pr-30% 0.1511 (0.0164)    0.1763 (0.0188)    0.1457 (0.0134)    0.1598 (0.0140)
+
+       cmu_us_jmk_cg      cmu_us_ksp_cg      cmu_us_rms_cg      cmu_us_rxr_cg
+dflt   0.1128 (0.0140)    0.1280 (0.0152)    0.1403 (0.0167)    0.1108 (0.0123)
+r+30%  0.0934 (0.0132)    0.1054 (0.0143)    0.1152 (0.0157)    0.0908 (0.0111)
+r-30%  0.1493 (0.0155)    0.1701 (0.0176)    0.1871 (0.0194)    0.1481 (0.0144)
+p+30%  0.1108 (0.0137)    0.1256 (0.0151)    0.1374 (0.0164)    0.1086 (0.0122)
+p-30%  0.1109 (0.0139)    0.1255 (0.0149)    0.1374 (0.0164)    0.1086 (0.0123)
+pr+30% 0.0929 (0.0132)    0.1050 (0.0144)    0.1147 (0.0157)    0.0901 (0.0112)
+pr-30% 0.1484 (0.0157)    0.1688 (0.0174)    0.1858 (0.0192)    0.1470 (0.0146)
+
+       cmu_us_slt_cg      rab_diphone        kal_diphone
+dflt   0.1204 (0.0148)    0.0052 (0.0019)    0.0049 (0.0016)
+r+30%  0.0996 (0.0138)    0.0050 (0.0019)    0.0047 (0.0018)
+r-30%  0.1596 (0.0167)    0.0056 (0.0016)    0.0054 (0.0015)
+p+30%  0.1182 (0.0144)    0.0052 (0.0019)    0.0049 (0.0016)
+p-30%  0.1182 (0.0145)    0.0051 (0.0019)    0.0049 (0.0016)
+pr+30% 0.0990 (0.0137)    0.0050 (0.0019)    0.0047 (0.0018)
+pr-30% 0.1586 (0.0167)    0.0056 (0.0017)    0.0054 (0.0015)
+
+Clearly, the marytts voices are much faster than all festival voices except for
+rab_diphone and kal_diphone. The reason for this is unclear; there do not seem 
+to be options in the festival server settings to improve performance. These 
+voices were also slow when the same one was used multiple times in a row instead
+of all of them in rotation.
+Furthermore, it is clear that faster speech can actually be generated faster 
+than "normal" speech while slower speech takes longer. So the computation time
+depends more on the length of the output than on the amount of text. Or in other
+words, the TTS systems do not generate the same audio in each case and then 
+lengthen or shorten it in some post-processing step. Rather, they generate the 
+audio in the required speed right away. This makes this approach to achieving 
+the right speech right vastly superior to using default output and manipulating
+it with Praat.
+Lastly, the results show that pitch manipulation through markup (SSML or SABLE)
+is "free". The runtimes for generating pitch manipulated speech are virtually 
+identical when compared to speech of the same rate. This, again, means that 
+markup is superior to manipulation with Praat, assuming accuracy is at least 
+comparable.
+
+

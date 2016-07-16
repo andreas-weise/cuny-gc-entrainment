@@ -30,7 +30,7 @@ Remove
 select sound
 
 total_duration = Get total duration
-text_grid = To TextGrid (silences)... 75 0 -25 0.1 0.1 silent sounding
+text_grid = To TextGrid (silences)... 75 0 -35 0.05 0.05 silent sounding
 interval_count = Get number of intervals... 1
 start_point = 0.0
 end_point = 0.0
@@ -41,9 +41,7 @@ for interval from 1 to interval_count
 	end_point = Get end point... 1 interval
 	if interval_label$ == "silent"
             interval_length = end_point - start_point
-            if interval_length > 0.05
-                silence_duration = silence_duration + interval_length
-            endif
+            silence_duration = silence_duration + interval_length
 	    interval_label$ = "sounding"
     else
 	    interval_label$ = "silent"
