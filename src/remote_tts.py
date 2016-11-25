@@ -461,7 +461,7 @@ def synthesize_alike(in_str, in_fname, in_str_is_fname=False,
     out_fname = synthesize_with_features(
         in_str, syllable_count / float(feat_val_dict['speech_duration']),
         feat_val_dict['intensity_mean'], feat_val_dict['pitch_mean'],
-        in_str_is_fname, input_type, out_fname, tts_type, ip_addr, port, voice)
+        in_str_is_fname, out_fname, tts_type, ip_addr, port, voice)
     return out_fname
 
 
