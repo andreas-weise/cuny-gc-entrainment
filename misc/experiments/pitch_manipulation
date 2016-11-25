@@ -1,76 +1,280 @@
 Pitch manipulation through SSML was tested with MaryTTS. Test sentences were 
-synthesized with two voices, six different target pitch values and at three 
-different speech rates. For each configuration, all sentences in the 
+synthesized with all three voices, seven different target pitch values and at 
+three different speech rates. For each configuration, all sentences in the 
 "syllable_count_corpus.txt" file in the "misc" folder were synthesized. Actual
 pitch values were measured with Praat.
 
 These are the results:
-voice: cmu-bdl-hsmm
 rate modifier: -30%
-    target pitch    actual pitch    std dev
-    100             101.5           1.6
-    110             111.1           1.6
-    120             120.8           1.6
-    130             130.7           1.5
-    140             140.6           1.9
-    150             150.1           1.7
-    160             159.6           1.6
+target    cmu-bdl-hsmm    cmu-rms-hsmm    cmu-slt-hsmm
+100       101.5 (1.6)      99.2 (1.5)      99.5 (1.2)
+110       111.1 (1.6)     108.6 (1.6)     109.1 (1.1)
+120       120.8 (1.6)     117.9 (1.7)     119.1 (1.3)
+130       130.7 (1.5)     127.7 (1.6)     129.2 (1.4)
+140       140.6 (1.9)     137.6 (1.6)     139.2 (1.2)
+150       150.1 (1.7)     147.5 (1.6)     149.1 (1.3)
+160       159.6 (1.6)     157.5 (1.6)     158.9 (1.1)
+default                                   170.5 (2.1)
 
 rate modifier: +0%
-    target pitch    actual pitch    std dev
-    default         119.9           1.7
-    100             101.3           1.7
-    110             110.8           1.7
-    130             130.4           1.6
-    140             140.3           2.0
-    150             149.8           1.7
-    160             159.3           1.5
+target    cmu-bdl-hsmm    cmu-rms-hsmm    cmu-slt-hsmm
+default   119.9 (1.7)      94.2 (1.4)     170.1 (2.0)
+100       101.3 (1.7)      99.1 (1.7)      99.3 (1.4)
+110       110.8 (1.7)     108.3 (1.6)     108.7 (1.2)
+120                                       119.1 (1.6)
+130       130.4 (1.6)     127.4 (1.6)     130.3 (2.7)
+140       140.3 (2.0)     137.3 (1.7)     139.8 (2.0)
+150       149.8 (1.7)     147.3 (1.6)     149.2 (1.7)
+160       159.3 (1.5)     157.2 (1.6)     158.8 (1.4)
 
 rate modifier: +30%
-    target pitch    actual pitch    std dev
-    100             101.7           2.3
-    110             111.3           2.2
-    120             120.9           2.0
-    130             130.4           1.7
-    140             140.2           1.7
-    150             149.7           1.8
-    160             159.2           1.6
+target    cmu-bdl-hsmm    cmu-rms-hsmm    cmu-slt-hsmm
+default                                   170.2 (2.3)
+100       101.7 (2.3)      98.9 (1.7)      99.6 (1.7)
+110       111.3 (2.2)     108.2 (1.6)     109.2 (1.8)
+120       120.9 (2.0)     117.5 (1.7)     120.6 (2.9)
+130       130.4 (1.7)     127.3 (1.6)     134.3 (4.5)
+140       140.2 (1.7)     137.3 (1.6)     143.9 (4.5)
+150       149.7 (1.8)     147.2 (1.6)     151.2 (3.3)
+160       159.2 (1.6)     157.2 (1.6)     159.5 (2.2)
 
-
-voice: cmu-rms-hsmm:
-rate modifier: -30%
-    target pitch    actual pitch    std dev
-    100              99.2           1.5
-    110             108.6           1.6
-    120             117.9           1.7
-    130             127.7           1.6
-    140             137.6           1.6
-    150             147.5           1.6
-    160             157.5           1.6
-
-rate modifier: +0%
-    target pitch    actual pitch    std dev	
-    default          94.2           1.4
-    100              99.1           1.7
-    110             108.3           1.6
-    130             127.4           1.6
-    140             137.3           1.7
-    150             147.3           1.6
-    160             157.2           1.6
-
-rate modifier: +30%
-    target pitch    actual pitch    std dev	
-    100              98.9           1.7
-    110             108.2           1.6
-    120             117.5           1.7
-    130             127.3           1.6
-    140             137.3           1.6
-    150             147.2           1.6
-    160             157.2           1.6
-
-In summary, the pitch manipulation is accurate within about 3Hz on average (greatest 
-delta about 2.8Hz).
+In summary, the pitch manipulation is accurate within about 4Hz on average 
+(greatest delta about 4.3Hz).
 
 Pitch manipulation tests with Praat and Festival TTS
 TODO
 
+/usr/bin/python3.5 /home/andi/github/cuny-gc-entrainment/src/remote_tts.py
+cmu_us_ahw_cg
+-30%
+100
+133.5
+1.5
+cmu_us_ahw_cg
+-30%
+110
+133.5
+1.5
+cmu_us_ahw_cg
+-30%
+120
+133.5
+1.5
+cmu_us_ahw_cg
+-30%
+130
+133.5
+1.5
+cmu_us_ahw_cg
+-30%
+140
+133.5
+1.5
+cmu_us_ahw_cg
+-30%
+150
+133.5
+1.5
+cmu_us_ahw_cg
+-30%
+160
+133.5
+1.5
+cmu_us_ahw_cg
+-30%
+default
+133.5
+1.5
+cmu_us_ahw_cg
++0%
+100
+133.5
+1.5
+cmu_us_ahw_cg
++0%
+110
+133.5
+1.5
+cmu_us_ahw_cg
++0%
+120
+133.5
+1.5
+cmu_us_ahw_cg
++0%
+130
+133.5
+1.5
+cmu_us_ahw_cg
++0%
+140
+133.5
+1.5
+cmu_us_ahw_cg
++0%
+150
+133.5
+1.5
+cmu_us_ahw_cg
++0%
+160
+133.5
+1.5
+cmu_us_ahw_cg
++0%
+default
+133.5
+1.5
+cmu_us_ahw_cg
++30%
+100
+133.6
+1.6
+cmu_us_ahw_cg
++30%
+110
+133.6
+1.6
+cmu_us_ahw_cg
++30%
+120
+133.6
+1.6
+cmu_us_ahw_cg
++30%
+130
+133.6
+1.6
+cmu_us_ahw_cg
++30%
+140
+133.6
+1.6
+cmu_us_ahw_cg
++30%
+150
+133.6
+1.6
+cmu_us_ahw_cg
++30%
+160
+133.6
+1.6
+cmu_us_ahw_cg
++30%
+default
+133.6
+1.6
+cmu_us_gka_cg
+-30%
+100
+125.9
+1.8
+cmu_us_gka_cg
+-30%
+110
+125.9
+1.8
+cmu_us_gka_cg
+-30%
+120
+125.9
+1.8
+cmu_us_gka_cg
+-30%
+130
+125.9
+1.8
+cmu_us_gka_cg
+-30%
+140
+125.9
+1.8
+cmu_us_gka_cg
+-30%
+150
+125.9
+1.8
+cmu_us_gka_cg
+-30%
+160
+125.9
+1.8
+cmu_us_gka_cg
+-30%
+default
+125.9
+1.8
+cmu_us_gka_cg
++0%
+100
+126.3
+2.0
+cmu_us_gka_cg
++0%
+110
+126.3
+2.0
+cmu_us_gka_cg
++0%
+120
+126.3
+2.0
+cmu_us_gka_cg
++0%
+130
+126.3
+2.0
+cmu_us_gka_cg
++0%
+140
+126.3
+2.0
+cmu_us_gka_cg
++0%
+150
+126.3
+2.0
+cmu_us_gka_cg
++0%
+160
+126.3
+2.0
+cmu_us_gka_cg
++0%
+default
+126.3
+2.0
+cmu_us_gka_cg
++30%
+100
+127.0
+1.9
+cmu_us_gka_cg
++30%
+110
+127.0
+1.9
+cmu_us_gka_cg
++30%
+120
+127.0
+1.9
+cmu_us_gka_cg
++30%
+130
+127.0
+1.9
+cmu_us_gka_cg
++30%
+140
+127.0
+1.9
+cmu_us_gka_cg
++30%
+150
+127.0
+1.9
+cmu_us_gka_cg
++30%
+160

@@ -1,0 +1,554 @@
+[
+    [
+        {
+            "id": "0_0",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 1, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "0_1",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0.6, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "0_2",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0.2, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        }
+    ],
+    [
+        {
+            "id": "1_0",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1, 
+                "glo_weight": 0, 
+                "loc_weight": 1, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "1_1",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1, 
+                "glo_weight": 0, 
+                "loc_weight": 0.6, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "1_2",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1, 
+                "glo_weight": 0, 
+                "loc_weight": 0.2, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        }
+    ],
+    [
+        {
+            "id": "2_0",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1, 
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67, 
+                "glo_weight": 0, 
+                "loc_weight": 1, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "2_1",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0.6, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "2_2",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0.2, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        }
+    ],
+    [
+        {
+            "id": "3_0",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0.8, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 3
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "3_1",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0.8, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 6
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "3_2",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0.8, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        }
+    ],
+    [
+        {
+            "id": "4_0",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0.8, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 3
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "4_1",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0.8, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 6
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "4_2",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0.8, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        }
+    ],
+    [
+        {
+            "id": "5_0",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0.8, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 3
+            }
+        },
+        {
+            "id": "5_1",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0.8, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 6
+            }
+        },
+        {
+            "id": "5_2",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0.8, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        }
+    ]
+]

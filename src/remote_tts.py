@@ -1,11 +1,12 @@
 import requests
 import subprocess
 from os import remove
+from os import getpid
 import numpy
 import xml.dom.minidom
-from auxiliaries import get_unique_fname
 import threading
 import json
+import time
 
 TTS_TYPE_MARY = 1
 TTS_TYPE_FESTIVAL = 2
@@ -20,6 +21,16 @@ DEFAULT_VOICE_FESTIVAL = 'kal_diphone'
 INPUT_TYPE_TEXT = 'TEXT'  # value matters, used directly as parameter for mary
 INPUT_TYPE_SSML = 'SSML'  # value matters, used directly as parameter for mary
 INPUT_TYPE_SABLE = 'SABLE'
+
+
+def get_unique_fname(name, ftype=None):
+    """makes a file name more unique by adding a process id and timestamp to it
+
+    args:
+        name: file name including path, excluding file type
+        ftype: file type including '.'
+    """
+    return '%s_%s_%d%s' % (name, time.strftime('%Y%m%d%H%M%S'), getpid(), ftype)
 
 
 def synthesize(in_str, in_str_is_fname=False, input_type=None, out_fname=None,
@@ -128,7 +139,8 @@ def synthesize(in_str, in_str_is_fname=False, input_type=None, out_fname=None,
     return out_fname
 
 
-def extract_feature_values(in_fname):
+def extract_feature_values(in_fname, extract_intensity=1, extract_pitch=1,
+                           extract_durations=1, extract_jitter_shimmer=1):
     """runs a praat script to extract a given wav file's feature values
 
     args:
@@ -141,8 +153,10 @@ def extract_feature_values(in_fname):
         subprocess.CalledProcessError: script call did not return with code 0
     """
     tmp_fname = get_unique_fname('../tmp/features', '.txt')
-    subprocess.check_call(['praat', '../misc/extract_features.praat',
-                           in_fname, tmp_fname])
+    subprocess.check_call(['praat', '--run', '../misc/extract_features.praat',
+                           in_fname, tmp_fname, str(extract_intensity),
+                           str(extract_pitch), str(extract_durations),
+                           str(extract_jitter_shimmer)])
 
     # extract comma-separated key value pairs from output file, then delete it
     with open(tmp_fname, 'r') as out_file:
@@ -251,7 +265,8 @@ def count_syllables_text(in_str, ip_addr=None, port=None):
 def synthesize_with_features(in_str, speech_rate=None, intensity=None,
                              pitch=None, in_str_is_fname=False, out_fname=None,
                              tts_type=None, ip_addr=None, port=None, voice=None,
-                             speech_rates_dict=None):
+                             speech_rates_dict=None, repeat_until_close=False,
+                             syll_count=None):
     """generates wav from plain text with given speech rate, intensity and pitch
 
     args:
@@ -263,25 +278,39 @@ def synthesize_with_features(in_str, speech_rate=None, intensity=None,
         speech_rates_dict: see load_speech_rates_dict(); offered as a parameter
             so it can be loaded once and reused for efficiency; loaded in this
             function if none given
+        repeat_until_close: whether to resynthesize until rate and pitch are as
+            close to the requested value as possible (only done if neither is
+            'default' or None)
+        syll_count: number of syllables in the input string to be used if
+            repeat_until_close is True; estimated internally if None given
         (for details on other parameters see synthesize())
 
     returns and raises:
         see synthesize()
     """
+
+    ###############
+    # PREPARATION #
+    ###############
     # if in_str is a file name, read string to synthesize from that file
     if in_str_is_fname:
         with open(in_str, 'r') as in_file:
             in_str = ''.join(in_file.readlines())
+    # store input for later before it is surrounded with markup
+    in_str_orig = in_str
 
     speech_rates_dict = (speech_rates_dict if speech_rates_dict
                          else load_speech_rates_dict())
     pitch = pitch if pitch else 'default'
 
-    # adjust target speech rate to be within the supported range
+    # store original target speech rate
+    speech_rate_orig = speech_rate
+    # adjust target speech rate to be within supported (speech_rates_dict) range
     if speech_rate < 3.0:
         speech_rate = 3.0
     elif speech_rate > 8.0:
         speech_rate = 8.0
+    speech_rate = speech_rate if speech_rate else 'default'
 
     # generate appropriate markup from plain text; only speech rate and pitch
     # are adjusted that way, intensity through praat (this combination is most
@@ -289,26 +318,78 @@ def synthesize_with_features(in_str, speech_rate=None, intensity=None,
     if not tts_type or tts_type == TTS_TYPE_MARY:
         input_type = INPUT_TYPE_SSML
         voice = voice if voice else DEFAULT_VOICE_MARY
-        if speech_rate:
-            rate_modifier = \
-                speech_rates_dict['mary'][voice][round(speech_rate, 1)]
-        else:
-            rate_modifier = 'default'
-        in_str = get_ssml(in_str, rate_modifier, pitch)
+        rate_modifier = speech_rate if speech_rate == 'default' else \
+            speech_rates_dict['mary'][voice][str(round(speech_rate, 1))]
+        markup_function = get_ssml
     elif tts_type == TTS_TYPE_FESTIVAL:
         input_type = INPUT_TYPE_SABLE
         voice = voice if voice else DEFAULT_VOICE_MARY
-        if speech_rate:
-            rate_modifier = \
-                speech_rates_dict['festival'][voice][round(speech_rate, 1)]
-        else:
-            rate_modifier = 'default'
-        in_str = get_sable(in_str, rate_modifier, pitch)
+        rate_modifier = speech_rate if speech_rate == 'default' else \
+            speech_rates_dict['festival'][voice][round(speech_rate, 1)]
+        markup_function = get_sable
     else:
         raise ValueError('given tts_type not supported')
+    in_str = markup_function(in_str, rate_modifier, pitch)
 
+    #############
+    # SYNTHESIS #
+    #############
+    # basic synthesis with best estimate of necessary rate modifier
     tmp_fname = synthesize(in_str, False, input_type, None, tts_type,
                            ip_addr, port, voice)
+
+    if repeat_until_close and speech_rate != 'default' and pitch != 'default':
+        speech_rate = speech_rate_orig
+        # estimate number of syllables if not given
+        syll_count = syll_count if syll_count else count_syllables_text(in_str)
+
+        feat_val_dict = extract_feature_values(tmp_fname, 0, 1, 1, 0)
+        act_speech_rate = syll_count / float(feat_val_dict['main_duration'])
+        act_pitch = float(feat_val_dict['pitch_mean'])
+        best_rate = [rate_modifier, abs(speech_rate - act_speech_rate)]
+        pct = int(rate_modifier[:-1])
+        tgt_pitch = float(pitch[:-2])
+        best_pitch = [pitch, abs(tgt_pitch - act_pitch)]
+        while True:
+            pct += 1 if speech_rate > act_speech_rate else -1
+            rate_modifier = '+%d%%' % pct if pct >= 0 else '-%d%%' % pct
+            # request pitch as much higher or lower as it was off by before
+            pitch = str(float(pitch[:-2]) + tgt_pitch - act_pitch) + 'Hz'
+            in_str = markup_function(in_str_orig, rate_modifier, pitch)
+            synthesize(in_str, False, input_type, tmp_fname, tts_type,
+                       ip_addr, port, voice)
+            feat_val_dict = extract_feature_values(tmp_fname, 0, 1, 1, 0)
+            act_speech_rate = syll_count / float(feat_val_dict['main_duration'])
+            act_pitch = float(feat_val_dict['pitch_mean'])
+
+            if abs(tgt_pitch - act_pitch) < best_pitch[1]:
+                best_pitch[0] = pitch
+                best_pitch[1] = abs(tgt_pitch - act_pitch)
+            if abs(speech_rate - act_speech_rate) > best_rate[1]:
+                # rate is as close as possible, now optimize pitch as well
+                while True:
+                    pitch = str(float(pitch[:-2]) + tgt_pitch - act_pitch) + \
+                            'Hz'
+                    in_str = markup_function(in_str_orig, best_rate[0], pitch)
+                    synthesize(in_str, False, input_type, tmp_fname, tts_type,
+                               ip_addr, port, voice)
+                    act_pitch = float(extract_feature_values(
+                        tmp_fname, 0, 1, 0, 0)['pitch_mean'])
+                    if abs(tgt_pitch - act_pitch) > best_pitch[1]:
+                        break
+                    else:
+                        best_pitch[0] = pitch
+                        best_pitch[1] = abs(tgt_pitch - act_pitch)
+                break
+            else:
+                best_rate[0] = rate_modifier
+                best_rate[1] = abs(speech_rate - act_speech_rate)
+        if not tts_type or tts_type == TTS_TYPE_MARY:
+            in_str = get_ssml(in_str_orig, best_rate[0], best_pitch[0])
+        else:  # tts_type == TTS_TYPE_FESTIVAL
+            in_str = get_sable(in_str_orig, best_rate[0], best_pitch[0])
+        synthesize(in_str, False, input_type, tmp_fname, tts_type,
+                   ip_addr, port, voice)
     out_fname = out_fname if out_fname \
         else get_unique_fname('../tmp/synthesis_final', '.wav')
 
@@ -339,7 +420,7 @@ def adapt_wav(in_fname, out_fname, syll_count=None, speech_rate=None,
     intensity = intensity if intensity else 0
     pitch = pitch if pitch else 0
 
-    subprocess.run(['praat', '../misc/adapt.praat',
+    subprocess.run(['praat', '--run', '../misc/adapt.praat',
                     in_fname, out_fname, str(syll_count), str(speech_rate),
                     str(intensity), str(pitch)], check=True)
 
@@ -397,7 +478,7 @@ def transcribe_wav(in_fname):
     tmp_fname2 = get_unique_fname('../tmp/transcribe', '.log')
 
     # prepend some silence (first bit of speech might else be treated as noise)
-    subprocess.check_call(['praat', '../misc/prepend_silence.praat',
+    subprocess.check_call(['praat', '--run', '../misc/prepend_silence.praat',
                            in_fname, tmp_fname1])
 
     # run pocketsphinx (printing to log so only transcript is written to stdout)
@@ -417,6 +498,7 @@ def get_ssml(in_str, rate='default', pitch='default', volume='default'):
 
     values for rate, pitch and volume are not checked here, incorrect inputs
     will cause an error; see ssml specification for legal values
+    must have same interface as get_sable (assumed in synthesize_with_features)!
     args:
         in_str: plain text string for synthesis
         rate: target speech rate
@@ -433,8 +515,8 @@ def get_ssml(in_str, rate='default', pitch='default', volume='default'):
             ' xsi:schemaLocation="http://www.w3.org/2001/10/synthesis'
             ' http://www.w3.org/TR/speech-synthesis/synthesis.xsd"'
             ' xml:lang="en-US">'
-            # '.' and '<p>...</p>' are needed for this to work with marytts
-            '.<p><prosody pitch="%s" rate="%s" volume="%s">%s</prosody></p>'
+            # '.' needed for this to work with marytts before 5.2
+            '.<prosody pitch="%s" rate="%s" volume="%s">%s</prosody>'
             '</speak>'
             % (pitch, rate, volume, in_str))
 
@@ -444,6 +526,7 @@ def get_sable(in_str, rate='default', pitch='default', volume='default'):
 
     values for rate, pitch and volume are not checked here, incorrect inputs
     will cause an error; see sable specification for legal values
+    must have same interface as get_ssml (assumed in synthesize_with_features)!
     args:
         in_str: plain text string for synthesis
         rate: target speech rate
@@ -509,6 +592,7 @@ def detect_tts_speech_rate(tts_type, voice, rate_modifier,
     """
     syll_rates = []
     corpus = load_syllable_count_corpus()
+    # synthesize every line in the corpus, measuring the speech rate for each
     for line in corpus:
         if tts_type == TTS_TYPE_MARY:
             in_str = get_ssml(line[1], rate_modifier)
@@ -522,7 +606,9 @@ def detect_tts_speech_rate(tts_type, voice, rate_modifier,
                        ip_addr, port, voice)
         except requests.exceptions.HTTPError:
             continue
-        duration = float(extract_feature_values(out_fname)['speech_duration'])
+        # 'main_duration' counts everything except silence at the end
+        duration = float(extract_feature_values(out_fname, 0, 0, 1, 0)
+                         ['main_duration'])
         syll_rates.append(line[0]/duration)
         remove(out_fname)
     return sum(syll_rates) / len(syll_rates), numpy.std(syll_rates)
