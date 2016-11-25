@@ -5,7 +5,6 @@ import wave
 import sys
 from os import remove
 import remote_tts
-from auxiliaries import get_unique_fname
 import time
 from threading import Thread
 import select
@@ -281,7 +280,7 @@ def main():
           'ignore them.\nhit enter now to start.')
     sys.stdin.read(1)
 
-    tmp_fname = get_unique_fname('../tmp/%s_eliza_in', '.wav')
+    tmp_fname = remote_tts.get_unique_fname('../tmp/%s_eliza_in', '.wav')
     in_str = 'hello, i am a psychotherapist. please tell me about your ' \
              'problems.'
 
@@ -293,8 +292,8 @@ def main():
 
     # loop indefinitely, only stop if the user requests it
     while True:
-        in_fname = get_unique_fname('../tmp/%s_eliza_in', '.wav')
-        out_fname = get_unique_fname('../tmp/%s_eliza_out', '.wav')
+        in_fname = remote_tts.get_unique_fname('../tmp/%s_eliza_in', '.wav')
+        out_fname = remote_tts.get_unique_fname('../tmp/%s_eliza_out', '.wav')
 
         print('please hit enter and say your response or type "stop" to stop')
         written_input = input()
