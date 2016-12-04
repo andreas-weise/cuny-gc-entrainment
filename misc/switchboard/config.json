@@ -550,5 +550,67 @@
                 "first_k": 100
             }
         }
+    ],
+    [
+        {
+            "id": "6_0",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }
+        },
+        {
+            "id": "6_1",
+            "pitch": 
+            {
+                "default": 94,
+                "glo_weight": 0, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0.05, 
+                "first_k": 100
+            },
+            "rate": 
+            {
+                "default": 4.1,
+                "glo_weight": 0.2, 
+                "loc_weight": 0, 
+                "glo_conv": 0, 
+                "loc_conv": 0, 
+                "first_k": 100
+            }, 
+            "intensity": 
+            {
+                "default": 67,
+                "glo_weight": 0, 
+                "loc_weight": 0.5, 
+                "glo_conv": 0.025, 
+                "loc_conv": 0, 
+                "first_k": 6
+            }
+        }
     ]
 ]
